@@ -1,0 +1,37 @@
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--color-blanco);
+  border-top: 0.5px solid var(--color-crema-borde);
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0 24px;
+  z-index: 100;
+}
+
+.footer-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 20px;
+  text-decoration: none;
+  color: var(--color-texto-muted);
+}
+
+.footer-btn.active {
+  color: var(--color-verde-oscuro);
+}
+
+.footer-icon {
+  font-size: 22px;
+}
+
+.footer-label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}

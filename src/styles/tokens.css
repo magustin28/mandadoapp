@@ -1,0 +1,42 @@
+:root {
+  /* Colores */
+  --color-verde-oscuro: #4a6741;
+  --color-verde-medio: #3b7a47;
+  --color-verde-claro: #ebf4e8;
+  --color-tierra: #b87333;
+  --color-tierra-claro: #f4efe8;
+  --color-crema: #f5f2ec;
+  --color-crema-borde: #ddd8cf;
+  --color-blanco: #ffffff;
+  --color-texto-principal: #2c2520;
+  --color-texto-secundario: #5c5048;
+  --color-texto-muted: #8c7e6e;
+  --color-wap: #25d366;
+  --color-wap-texto: #128c4f;
+
+  /* Radios */
+  --radius-card: 16px;
+  --radius-btn: 14px;
+  --radius-input: 14px;
+  --radius-icon: 12px;
+  --radius-pill: 50px;
+
+  /* Espaciado */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+
+  /* Tipografía */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 26px;
+
+  /* Fuente */
+  --font-sans: "Nunito", sans-serif;
+}
