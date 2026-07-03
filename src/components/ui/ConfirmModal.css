@@ -1,0 +1,56 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 998;
+  padding: var(--space-xl);
+}
+
+.modal-box {
+  background: var(--color-blanco);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.modal-message {
+  font-size: var(--font-size-lg);
+  color: var(--color-texto-principal);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.modal-btn-cancel {
+  flex: 1;
+  background: var(--color-crema);
+  border: 1px solid var(--color-crema-borde);
+  border-radius: var(--radius-btn);
+  padding: var(--space-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-texto-secundario);
+}
+
+.modal-btn-confirm {
+  flex: 1;
+  background: #fdecea;
+  border: 1.5px solid #e8c4c4;
+  border-radius: var(--radius-btn);
+  padding: var(--space-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: #c0392b;
+}

@@ -25,13 +25,14 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #c8b89a;
+  background: #C8B89A;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: #5c4a35;
+  color: #5C4A35;
+  cursor: pointer;
 }
 
 .home-content {

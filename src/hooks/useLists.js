@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   getLists,
+  getAllLists,
   getListById,
   saveList,
   updateList,
@@ -12,6 +13,13 @@ import {
   getStores,
   saveStore,
   deleteStore,
+  copyList,
+  addCollaborator,
+  removeCollaborator,
+  getCollaboratorsByList,
+  isCollaborator,
+  isOwner,
+  getUsers,
 } from "../services/storage";
 
 export function useLists() {
@@ -45,6 +53,12 @@ export function useLists() {
     return lists.filter((l) => l.category === category);
   }
 
+  function duplicateList(id) {
+    const copy = copyList(id);
+    setLists(getLists());
+    return copy;
+  }
+
   return {
     lists,
     addList,
@@ -52,6 +66,7 @@ export function useLists() {
     removeList,
     getById,
     getByCategory,
+    duplicateList,
   };
 }
 
@@ -105,4 +120,43 @@ export function useStores(category) {
   }
 
   return { stores, addStore, removeStore };
+}
+
+export function useCollaborators(listId) {
+  const [collaborators, setCollaborators] = useState([]);
+
+  useEffect(() => {
+    if (listId) {
+      const collabs = getCollaboratorsByList(listId);
+      const users = getUsers();
+      const withNames = collabs.map((c) => ({
+        ...c,
+        name: users.find((u) => u.id === c.user_id)?.name || "Usuario",
+        email: users.find((u) => u.id === c.user_id)?.email || "",
+      }));
+      setCollaborators(withNames);
+    }
+  }, [listId]);
+
+  function add(email) {
+    const result = addCollaborator(listId, email);
+    if (result.collaborator) {
+      const users = getUsers();
+      const collabs = getCollaboratorsByList(listId);
+      const withNames = collabs.map((c) => ({
+        ...c,
+        name: users.find((u) => u.id === c.user_id)?.name || "Usuario",
+        email: users.find((u) => u.id === c.user_id)?.email || "",
+      }));
+      setCollaborators(withNames);
+    }
+    return result;
+  }
+
+  function remove(userId) {
+    removeCollaborator(listId, userId);
+    setCollaborators((prev) => prev.filter((c) => c.user_id !== userId));
+  }
+
+  return { collaborators, add, remove };
 }

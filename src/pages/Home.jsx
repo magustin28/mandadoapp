@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { IconPlus, IconBuildingStore, IconLeaf, IconBasket, IconChevronRight } from "@tabler/icons-react";
+import { IconPlus, IconBuildingStore, IconLeaf, IconBasket, IconChevronRight, IconUsers } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import { useLists } from "../hooks/useLists";
+import { useAuth } from "../hooks/useAuth";
+import { isCollaborator } from "../services/storage";
 import "./Home.css";
 
 const CATEGORIES = {
@@ -13,6 +15,7 @@ const CATEGORIES = {
 function Home() {
   const navigate = useNavigate();
   const { lists, getByCategory } = useLists();
+  const { getInitials } = useAuth();
 
   const recientes = lists.slice(-3).reverse();
 
@@ -21,9 +24,11 @@ function Home() {
       <div className="home-header">
         <div>
           <p className="home-greeting">Buen día 👋</p>
-          <h1 className="home-title">Mis listas</h1>
+          <h1 className="home-title">MandadoApp</h1>
         </div>
-        <div className="home-avatar">MD</div>
+        <div className="home-avatar" onClick={() => navigate("/perfil")}>
+          {getInitials()}
+        </div>
       </div>
 
       <div className="home-content">
@@ -60,14 +65,17 @@ function Home() {
                 <button key={list.id} className="list-item" onClick={() => navigate(`/lista/${list.id}`)}>
                   <span className={`list-dot dot-${list.category}`}></span>
                   <div className="list-info">
-                    <p className="list-name">{list.name}</p>
+                    <p className="list-name">
+                      {list.name}
+                      {isCollaborator(list.id) && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
+                    </p>
                     <p className="list-meta">
                       {CATEGORIES[list.category]?.label} · {list.items?.length || 0} items
                     </p>
                   </div>
                   <IconChevronRight size={18} color="#C4BCB0" />
                 </button>
-              ))}
+              ))}{" "}
             </div>
           </>
         )}

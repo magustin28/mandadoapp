@@ -10,16 +10,24 @@ import {
   IconLeaf,
   IconBasket,
   IconCheck,
+  IconUsers,
+  IconUserPlus,
+  IconX,
 } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
-import { useLists, usePreloadedItems, useStores } from "../hooks/useLists";
+import { useLists, usePreloadedItems, useStores, useCollaborators } from "../hooks/useLists";
 import { sendWhatsApp } from "../utils/whatsapp";
+import { isOwner, isCollaborator, getUsers, getUserByEmail, addCollaborators, getCurrentUser } from "../services/storage";
+import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
+import Toast from "../components/ui/Toast";
+import ConfirmModal from "../components/ui/ConfirmModal";
 import "./ListForm.css";
 
 const CATEGORIES = [
-  { key: "supermercado", label: "Supermercado", icon: <IconBuildingStore size={20} color="#4A6741" /> },
-  { key: "verduleria", label: "Verdulería", icon: <IconLeaf size={20} color="#3B7A47" /> },
-  { key: "otros", label: "Otros", icon: <IconBasket size={20} color="#B87333" /> },
+  { key: "supermercado", label: "Supermercado", icon: (selected) => <IconBuildingStore size={20} color={selected ? "#fff" : "#4A6741"} /> },
+  { key: "verduleria", label: "Verdulería", icon: (selected) => <IconLeaf size={20} color={selected ? "#fff" : "#3B7A47"} /> },
+  { key: "otros", label: "Otros", icon: (selected) => <IconBasket size={20} color={selected ? "#fff" : "#B87333"} /> },
 ];
 
 const CATEGORIES_WITH_STORES = ["supermercado"];
@@ -40,6 +48,30 @@ function ListForm() {
 
   const { items: preloaded } = usePreloadedItems(category);
   const { stores } = useStores(category);
+
+  const { toasts, success, error } = useToast();
+  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+
+  const [showCollabPanel, setShowCollabPanel] = useState(false);
+
+  const owner = isOwner(id);
+  const collab = isCollaborator(id);
+
+  const canEdit = owner || !id;
+  const isShared = id && (owner || collab);
+
+  const { collaborators, add, remove } = useCollaborators(id);
+
+  const ownerName = collab
+    ? (() => {
+        const list = getById(id);
+        const users = getUsers();
+        return users.find((u) => u.id === list?.owner_id)?.name || "Otro usuario";
+      })()
+    : null;
+
+  const [pendingCollabs, setPendingCollabs] = useState([]);
+  const [emailCollab, setEmailCollab] = useState("");
 
   function getDefaultName(cat, store) {
     const fecha = new Date().toLocaleDateString("es-AR", {
@@ -65,6 +97,7 @@ function ListForm() {
       setName(list.name);
       setCategory(list.category);
       setItems(list.items || []);
+      setSelectedStore(list.store || null); // ← recuperar store
     } else {
       setName(getDefaultName("supermercado", null));
     }
@@ -122,11 +155,11 @@ function ListForm() {
 
   function validate() {
     if (!name.trim()) {
-      alert("Ponele un nombre a la lista");
+      error("Ponele un nombre a la lista");
       return false;
     }
     if (items.length === 0) {
-      alert("Agregá al menos un item");
+      error("Agregá al menos un item");
       return false;
     }
     return true;
@@ -135,10 +168,18 @@ function ListForm() {
   function handleSave() {
     if (!validate()) return;
     if (isEditing) {
-      editList(id, { name, category, items });
+      editList(id, { name, category, items, store: selectedStore });
+      success("Lista guardada");
       navigate("/categorias");
     } else {
-      addList({ name, category, items });
+      const newList = addList({ name, category, items, store: selectedStore });
+      if (pendingCollabs.length > 0) {
+        addCollaborators(
+          newList.id,
+          pendingCollabs.map((c) => c.id),
+        );
+      }
+      success("Lista creada");
       navigate("/");
     }
   }
@@ -146,18 +187,25 @@ function ListForm() {
   function handleWhatsApp() {
     if (!validate()) return;
     if (isEditing) {
-      editList(id, { name, category, items });
+      editList(id, { name, category, items, store: selectedStore });
       sendWhatsApp({ name, category, items });
       navigate("/categorias");
     } else {
-      const newList = addList({ name, category, items });
+      const newList = addList({ name, category, items, store: selectedStore });
+      if (pendingCollabs.length > 0) {
+        addCollaborators(
+          newList.id,
+          pendingCollabs.map((c) => c.id),
+        );
+      }
       sendWhatsApp(newList);
       navigate("/");
     }
   }
 
-  function handleDelete() {
-    if (confirm("¿Eliminar esta lista?")) {
+  async function handleDelete() {
+    const confirmed = await ask("¿Eliminar esta lista?");
+    if (confirmed) {
       removeList(id);
       navigate("/categorias");
     }
@@ -165,24 +213,73 @@ function ListForm() {
 
   if (isEditing && !loaded) return null;
 
+  function handleAddCollaborator() {
+    if (!emailCollab.trim()) return;
+    if (!isEditing) {
+      const user = getUserByEmail(emailCollab.trim());
+      if (!user) {
+        error("No existe una cuenta con ese email");
+        return;
+      }
+      const currentUser = getCurrentUser();
+      if (user.id === currentUser?.id) {
+        error("No podés invitarte a vos mismo");
+        return;
+      }
+      if (pendingCollabs.find((c) => c.email === user.email)) {
+        error("Ya está en la lista");
+        return;
+      }
+      setPendingCollabs([...pendingCollabs, { id: user.id, name: user.name, email: user.email }]);
+      setEmailCollab("");
+      success(`${user.name} agregado`);
+    } else {
+      const result = add(emailCollab.trim());
+      if (result.error) {
+        error(result.error);
+      } else {
+        success(`${result.user.name} agregado como colaborador`);
+        setEmailCollab("");
+      }
+    }
+  }
+
+  async function handleRemoveCollaborator(userId, name) {
+    const confirmed = await ask(`¿Eliminar a ${name} como colaborador?`);
+    if (confirmed) remove(userId);
+  }
+
   return (
     <div className="page">
       <div className="nav-bar">
         <button className="nav-back" onClick={() => navigate(-1)}>
           <IconChevronLeft size={20} />
         </button>
-        <span className="nav-title">{isEditing ? "Editar lista" : "Nueva lista"}</span>
+        <div>
+          <span className="nav-title">
+            {isEditing ? "Editar lista" : "Nueva lista"}
+            {isShared && <IconUsers size={16} color="#4A6741" style={{ marginLeft: 6 }} />}{" "}
+          </span>
+          {collab && ownerName && <p className="nav-subtitle">Compartida por {ownerName}</p>}
+        </div>
       </div>
 
       <div className="listform-content">
         <p className="section-label">Nombre de la lista</p>
-        <input className="input-name" type="text" placeholder="Ej: Compras del martes..." value={name} onChange={(e) => setName(e.target.value)} />
-
+        <input
+          className="input-name"
+          type="text"
+          placeholder="Ej: Compras del martes..."
+          value={name}
+          onChange={(e) => canEdit && setName(e.target.value)}
+          readOnly={!canEdit}
+          style={!canEdit ? { opacity: 0.7 } : {}}
+        />
         <p className="section-label">Categoría</p>
         <div className="cat-tabs-scroll">
           {CATEGORIES.map(({ key, label, icon }) => (
             <button key={key} className={`cat-opt-tab ${category === key ? "cat-opt-tab--selected" : ""}`} onClick={() => handleCategoryChange(key)}>
-              <span>{icon}</span>
+              <span>{icon(category === key)}</span>
               <span>{label}</span>
             </button>
           ))}
@@ -268,6 +365,62 @@ function ListForm() {
             <span className="add-item-text">Agregar item</span>
           </button>
         </div>
+        {(owner || !id) && (
+          <>
+            <div className="items-header" style={{ marginTop: "var(--space-xl)" }}>
+              <p className="section-label" style={{ margin: 0 }}>
+                Colaboradores
+              </p>
+              <button className="btn-preloaded" onClick={() => setShowCollabPanel(!showCollabPanel)}>
+                <IconUsers size={14} />{" "}
+                {(isEditing ? collaborators.length : pendingCollabs.length) > 0
+                  ? `${isEditing ? collaborators.length : pendingCollabs.length} colaborador${(isEditing ? collaborators.length : pendingCollabs.length) > 1 ? "es" : ""}`
+                  : "Invitar"}
+              </button>
+            </div>
+
+            {showCollabPanel && (
+              <div className="collab-panel">
+                {/* lista de colaboradores */}
+                {(isEditing ? collaborators : pendingCollabs).length > 0 && (
+                  <div className="collab-list">
+                    {(isEditing ? collaborators : pendingCollabs).map((c) => (
+                      <div key={c.id} className="collab-row">
+                        <div className="collab-avatar">{c.name[0].toUpperCase()}</div>
+                        <div className="collab-info">
+                          <p className="collab-name">{c.name}</p>
+                          <p className="collab-email">{c.email}</p>
+                        </div>
+                        <button
+                          className="collab-remove"
+                          onClick={() =>
+                            isEditing
+                              ? handleRemoveCollaborator(c.user_id || c.id, c.name)
+                              : setPendingCollabs(pendingCollabs.filter((p) => p.id !== c.id))
+                          }
+                        >
+                          <IconX size={16} color="#C0392B" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="collab-add">
+                  <input
+                    className="input-name"
+                    type="email"
+                    placeholder="Email del colaborador..."
+                    value={emailCollab}
+                    onChange={(e) => setEmailCollab(e.target.value)}
+                  />
+                  <button className="btn-collab-add" onClick={handleAddCollaborator}>
+                    <IconUserPlus size={18} color="#fff" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="bottom-actions">
@@ -288,6 +441,9 @@ function ListForm() {
           </button>
         )}
       </div>
+
+      <Toast toasts={toasts} />
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
 
       <Footer />
     </div>

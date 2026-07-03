@@ -3,6 +3,10 @@ import Footer from "../components/layout/Footer";
 import { usePreloadedItems } from "../hooks/useLists";
 import { IconBuildingStore, IconLeaf, IconBasket, IconPencil, IconTrash, IconCheck, IconPlus } from "@tabler/icons-react";
 import "./MisItems.css";
+import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
+import Toast from "../components/ui/Toast";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 const CATEGORIES = [
   { key: "supermercado", label: "Supermercado", icon: <IconBuildingStore size={18} /> },
@@ -18,6 +22,9 @@ function MisItems() {
   const [editData, setEditData] = useState({});
 
   const { items, addItem, editItem, removeItem } = usePreloadedItems(activeCat);
+
+  const { toasts, success } = useToast();
+  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
 
   function handleAdd() {
     if (!newName.trim()) return;
@@ -36,8 +43,12 @@ function MisItems() {
     setEditingId(null);
   }
 
-  function handleDelete(id) {
-    if (confirm("¿Eliminar este item?")) removeItem(id);
+  async function handleDelete(id) {
+    const confirmed = await ask("¿Eliminar este item?");
+    if (confirmed) {
+      removeItem(id);
+      success("Item eliminado");
+    }
   }
 
   return (
@@ -98,6 +109,9 @@ function MisItems() {
           </div>
         </div>
       </div>
+
+      <Toast toasts={toasts} />
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
 
       <Footer />
     </div>

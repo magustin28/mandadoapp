@@ -9,7 +9,7 @@ export function buildWhatsAppMessage(list) {
 
   const itemLines = list.items.map((item) => `• ${item.name} — ${item.quantity} ${item.unit}`).join("\n");
 
-  const message = `*${list.name}*\n_${categoryLabel}_\n\n${itemLines}\n\n_Enviado desde Mandado_`;
+  const message = `*${list.name}*\n_${categoryLabel}_\n\n${itemLines}\n\n_Enviado desde MandadoApp_`;
 
   return message;
 }

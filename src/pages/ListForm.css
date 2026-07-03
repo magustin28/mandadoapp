@@ -282,7 +282,7 @@
 
 .listform-content {
   padding: 0 var(--space-xl);
-  padding-bottom: 240px;
+  padding-bottom: 280px;
 }
 
 .cat-tabs-scroll {
@@ -331,8 +331,99 @@
 }
 
 .store-chip--selected {
-  background: var(--color-verde-claro);
+  background: var(--color-verde-oscuro);
   border-color: var(--color-verde-oscuro);
-  color: var(--color-verde-oscuro);
+  color: var(--color-blanco);
+  font-weight: 500;
+}
+
+.collab-panel {
+  background: var(--color-blanco);
+  border: 1px solid var(--color-crema-borde);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin-bottom: var(--space-md);
+}
+
+.collab-list {
+  border-bottom: 0.5px solid var(--color-crema-borde);
+}
+
+.collab-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 0.5px solid #eee9e2;
+}
+
+.collab-row:last-child {
+  border-bottom: none;
+}
+
+.collab-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #c8b89a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
   font-weight: 600;
+  color: #5c4a35;
+  flex-shrink: 0;
+}
+
+.collab-info {
+  flex: 1;
+}
+
+.collab-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-texto-principal);
+}
+
+.collab-email {
+  font-size: var(--font-size-xs);
+  color: var(--color-texto-muted);
+}
+
+.collab-remove {
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+.collab-add {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  align-items: center;
+}
+
+.collab-add .input-name {
+  flex: 1;
+  padding: var(--space-md);
+  font-size: var(--font-size-md);
+}
+
+.btn-collab-add {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-verde-oscuro);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-texto-muted);
+  margin-top: 1px;
 }
