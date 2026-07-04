@@ -1,15 +1,23 @@
 const CATEGORY_LABELS = {
   supermercado: "Supermercado",
-  verduleria: "Verduleria",
+  verduleria: "Verdulería",
   otros: "Otros",
 };
 
 export function buildWhatsAppMessage(list) {
   const categoryLabel = CATEGORY_LABELS[list.category] || list.category;
 
-  const itemLines = list.items.map((item) => `• ${item.name} — ${item.quantity} ${item.unit}`).join("\n");
+  const itemLines = list.items
+    .map((item) => {
+      let line = `• ${item.name}`;
+      if (item.quantity) line += ` — ${item.quantity}${item.unit ? " " + item.unit : ""}`;
+      if (item.price) line += ` — $${Number(item.price).toLocaleString("es-AR")}`;
+      if (item.ver) line += ` — VER`;
+      return line;
+    })
+    .join("\n");
 
-  const message = `*${list.name}*\n_${categoryLabel}_\n\n${itemLines}\n\n_Enviado desde MandadoApp_`;
+  const message = `*${list.name}*\n${itemLines}\n\n_Enviado desde Mandado_`;
 
   return message;
 }

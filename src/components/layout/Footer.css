@@ -9,7 +9,7 @@
   border-top: 0.5px solid var(--color-crema-borde);
   display: flex;
   justify-content: space-around;
-  padding: 10px 0 24px;
+  padding: 10px 0 15px;
   z-index: 100;
 }
 

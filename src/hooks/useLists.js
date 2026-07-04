@@ -125,37 +125,32 @@ export function useStores(category) {
 export function useCollaborators(listId) {
   const [collaborators, setCollaborators] = useState([]);
 
-  useEffect(() => {
-    if (listId) {
-      const collabs = getCollaboratorsByList(listId);
-      const users = getUsers();
-      const withNames = collabs.map((c) => ({
+  function refresh() {
+    if (!listId) return;
+    const collabs = getCollaboratorsByList(listId);
+    const users = getUsers();
+    setCollaborators(
+      collabs.map((c) => ({
         ...c,
         name: users.find((u) => u.id === c.user_id)?.name || "Usuario",
         email: users.find((u) => u.id === c.user_id)?.email || "",
-      }));
-      setCollaborators(withNames);
-    }
+      })),
+    );
+  }
+
+  useEffect(() => {
+    refresh();
   }, [listId]);
 
   function add(email) {
     const result = addCollaborator(listId, email);
-    if (result.collaborator) {
-      const users = getUsers();
-      const collabs = getCollaboratorsByList(listId);
-      const withNames = collabs.map((c) => ({
-        ...c,
-        name: users.find((u) => u.id === c.user_id)?.name || "Usuario",
-        email: users.find((u) => u.id === c.user_id)?.email || "",
-      }));
-      setCollaborators(withNames);
-    }
+    if (result.collaborator) refresh();
     return result;
   }
 
   function remove(userId) {
     removeCollaborator(listId, userId);
-    setCollaborators((prev) => prev.filter((c) => c.user_id !== userId));
+    refresh();
   }
 
   return { collaborators, add, remove };

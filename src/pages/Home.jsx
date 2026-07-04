@@ -3,7 +3,7 @@ import { IconPlus, IconBuildingStore, IconLeaf, IconBasket, IconChevronRight, Ic
 import Footer from "../components/layout/Footer";
 import { useLists } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
-import { isCollaborator } from "../services/storage";
+import { isSharedList } from "../services/storage";
 import "./Home.css";
 
 const CATEGORIES = {
@@ -17,7 +17,7 @@ function Home() {
   const { lists, getByCategory } = useLists();
   const { getInitials } = useAuth();
 
-  const recientes = lists.slice(-3).reverse();
+  const recientes = [...lists].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 3);
 
   return (
     <div className="page">
@@ -67,7 +67,7 @@ function Home() {
                   <div className="list-info">
                     <p className="list-name">
                       {list.name}
-                      {isCollaborator(list.id) && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
+                      {isSharedList(list.id) && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
                     </p>
                     <p className="list-meta">
                       {CATEGORIES[list.category]?.label} · {list.items?.length || 0} items

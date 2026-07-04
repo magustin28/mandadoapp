@@ -7,7 +7,7 @@ import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
-import { isCollaborator } from "../services/storage";
+import { getListsByCollaborator, getCurrentUser, isSharedList } from "../services/storage";
 
 const CATEGORIES = [
   { key: "supermercado", label: "Supermercado", icon: <IconBuildingStore size={18} /> },
@@ -21,10 +21,12 @@ function Categories() {
   const { lists, getByCategory, removeList, duplicateList } = useLists();
 
   const activeCat = searchParams.get("cat") || "supermercado";
-  const filteredLists = getByCategory(activeCat);
-
+  const filteredLists = getByCategory(activeCat).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   const { toasts, success } = useToast();
   const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+
+  const currentUser = getCurrentUser();
+  const collabListIds = currentUser ? getListsByCollaborator(currentUser.id).map((c) => c.list_id) : [];
 
   async function handleDelete(id) {
     const confirmed = await ask("¿Eliminar esta lista?");
@@ -66,9 +68,10 @@ function Categories() {
             {filteredLists.map((list) => (
               <div key={list.id} className="cat-list-card">
                 <div className="cat-list-info" onClick={() => navigate(`/lista/${list.id}`)}>
+                  {" "}
                   <p className="list-name">
                     {list.name}
-                    {isCollaborator(list.id) && (
+                    {isSharedList(list.id) && (
                       <IconUsers size={14} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle", flexShrink: 0 }} />
                     )}
                   </p>
@@ -77,7 +80,7 @@ function Categories() {
                   </p>
                 </div>{" "}
                 <div className="cat-list-actions">
-                  <button className="btn-edit" onClick={() => navigate(`/lista/${list.id}`)}>
+                  <button className="btn-edit" onClick={() => navigate(`/lista/${list.id}/editar`)}>
                     <IconPencil size={18} color="#8C7E6E" />
                   </button>
                   <button className="btn-copy" onClick={() => handleCopy(list.id)}>

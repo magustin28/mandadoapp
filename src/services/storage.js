@@ -19,6 +19,7 @@ export function saveList(list) {
     updatedAt: new Date().toISOString(),
   };
   localStorage.setItem(LISTS_KEY, JSON.stringify([...lists, newList]));
+  if (list.items?.length) savePriceHistory(list.items);
   return newList;
 }
 
@@ -26,6 +27,7 @@ export function updateList(id, data) {
   const lists = getAllLists();
   const updated = lists.map((l) => (l.id === id ? { ...l, ...data, updatedAt: new Date().toISOString() } : l));
   localStorage.setItem(LISTS_KEY, JSON.stringify(updated));
+  if (data.items?.length) savePriceHistory(data.items);
 }
 
 export function deleteList(id) {
@@ -49,6 +51,11 @@ export function getLists() {
   const collabLists = lists.filter((l) => collabListIds.includes(l.id));
 
   return [...ownLists, ...collabLists];
+}
+
+export function isSharedList(listId) {
+  const collaborators = getCollaborators();
+  return collaborators.some((c) => c.list_id === listId);
 }
 
 // ─── Items precargables ───────────────────────────────
@@ -295,4 +302,36 @@ export function addCollaborators(listId, userIds) {
     createdAt: new Date().toISOString(),
   }));
   localStorage.setItem(COLLABORATORS_KEY, JSON.stringify([...collaborators, ...newCollabs]));
+}
+
+// ─── Historial de precios ─────────────────────────────
+
+const PRICE_HISTORY_KEY = "mandado_price_history";
+
+export function getPriceHistory() {
+  const data = localStorage.getItem(PRICE_HISTORY_KEY);
+  return data ? JSON.parse(data) : {};
+}
+
+export function getPriceByName(name) {
+  const history = getPriceHistory();
+  return history[name.toLowerCase()] || null;
+}
+
+export function savePriceHistory(items) {
+  const history = getPriceHistory();
+  const fecha = new Date().toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  items.forEach((item) => {
+    if (item.price) {
+      history[item.name.toLowerCase()] = {
+        price: item.price,
+        date: fecha,
+      };
+    }
+  });
+  localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(history));
 }
