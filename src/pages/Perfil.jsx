@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IconUser, IconMail, IconLock, IconLogout, IconChevronLeft } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
-import { updateUser } from "../services/storage";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
@@ -13,16 +12,24 @@ import "./Auth.css";
 
 function Perfil() {
   const navigate = useNavigate();
-  const { user, logout, getInitials } = useAuth();
+  const { user, logout, updateProfile, getInitials } = useAuth();
   const { toasts, success, error } = useToast();
   const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  function handleSave() {
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+    }
+  }, [user]);
+
+  async function handleSave() {
     if (!name.trim()) {
       error("El nombre no puede estar vacío");
       return;
@@ -35,16 +42,30 @@ function Perfil() {
       error("La contraseña debe tener al menos 4 caracteres");
       return;
     }
-    const data = { name, email };
-    if (password) data.password = password;
-    updateUser(user.id, data);
-    success("Datos actualizados correctamente");
+
+    setSaving(true);
+    const result = await updateProfile({ name, email, password: password || undefined });
+    setSaving(false);
+
+    if (result.error) {
+      error(result.error);
+      return;
+    }
+
+    setPassword("");
+    setPassword2("");
+
+    if (result.emailChangePending) {
+      success("Te enviamos un mail a la nueva dirección para confirmar el cambio");
+    } else {
+      success("Datos actualizados correctamente");
+    }
   }
 
   async function handleLogout() {
     const confirmed = await ask("¿Cerrar sesión?");
     if (confirmed) {
-      logout();
+      await logout();
       navigate("/login");
     }
   }
@@ -103,8 +124,8 @@ function Perfil() {
           </div>
         </div>
 
-        <button className="auth-btn-primary" onClick={handleSave}>
-          Guardar cambios
+        <button className="auth-btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? "Guardando..." : "Guardar cambios"}
         </button>
 
         <button className="perfil-btn-logout" onClick={handleLogout}>

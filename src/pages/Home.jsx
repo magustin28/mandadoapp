@@ -3,7 +3,6 @@ import { IconPlus, IconBuildingStore, IconLeaf, IconBasket, IconChevronRight, Ic
 import Footer from "../components/layout/Footer";
 import { useLists } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
-import { isSharedList } from "../services/storage";
 import "./Home.css";
 
 const CATEGORIES = {
@@ -67,7 +66,7 @@ function Home() {
                   <div className="list-info">
                     <p className="list-name">
                       {list.name}
-                      {isSharedList(list.id) && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
+                      {list.isShared && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
                     </p>
                     <p className="list-meta">
                       {CATEGORIES[list.category]?.label} · {list.items?.length || 0} items

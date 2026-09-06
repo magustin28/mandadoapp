@@ -1,337 +1,345 @@
-const LISTS_KEY = "mandado_lists";
-const ITEMS_KEY = "mandado_preloaded_items";
+import { supabase } from "../lib/supabaseClient";
 
-// ─── Listas ───────────────────────────────────────────
-
-export function getListById(id) {
-  const lists = getAllLists();
-  return lists.find((l) => l.id === id) || null;
+async function getUserId() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user?.id;
 }
 
-export function saveList(list) {
-  const lists = getAllLists();
-  const currentUser = getCurrentUser();
-  const newList = {
-    ...list,
-    id: crypto.randomUUID(),
-    owner_id: currentUser?.id || null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+function mapItem(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    quantity: row.quantity,
+    unit: row.unit,
+    price: row.price,
+    ver: row.ver,
+    position: row.position,
   };
-  localStorage.setItem(LISTS_KEY, JSON.stringify([...lists, newList]));
-  if (list.items?.length) savePriceHistory(list.items);
-  return newList;
 }
 
-export function updateList(id, data) {
-  const lists = getAllLists();
-  const updated = lists.map((l) => (l.id === id ? { ...l, ...data, updatedAt: new Date().toISOString() } : l));
-  localStorage.setItem(LISTS_KEY, JSON.stringify(updated));
-  if (data.items?.length) savePriceHistory(data.items);
+function mapList(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    store: row.store,
+    owner_id: row.owner_id,
+    ownerName: row.profiles?.name || null,
+    isShared: (row.collaborators || []).length > 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    items: (row.list_items || [])
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .map(mapItem),
+  };
 }
 
-export function deleteList(id) {
-  const lists = getAllLists();
-  const filtered = lists.filter((l) => l.id !== id);
-  localStorage.setItem(LISTS_KEY, JSON.stringify(filtered));
+const LIST_SELECT = "*, list_items(*), profiles!lists_owner_id_fkey(name, email), collaborators(id)";
+
+function normalizeStore(store) {
+  if (!store) return null;
+  return typeof store === "string" ? store : store.name || null;
 }
 
-export function getAllLists() {
-  const data = localStorage.getItem(LISTS_KEY);
-  return data ? JSON.parse(data) : [];
+// ---------- Listas ----------
+
+export async function getLists() {
+  const { data, error } = await supabase.from("lists").select(LIST_SELECT).order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data.map(mapList);
 }
 
-export function getLists() {
-  const lists = getAllLists();
-  const currentUser = getCurrentUser();
-  if (!currentUser) return [];
-
-  const ownLists = lists.filter((l) => l.owner_id === currentUser.id);
-  const collabListIds = getListsByCollaborator(currentUser.id).map((c) => c.list_id);
-  const collabLists = lists.filter((l) => collabListIds.includes(l.id));
-
-  return [...ownLists, ...collabLists];
+export async function getListById(id) {
+  const { data, error } = await supabase.from("lists").select(LIST_SELECT).eq("id", id).single();
+  if (error) throw error;
+  return mapList(data);
 }
 
-export function isSharedList(listId) {
-  const collaborators = getCollaborators();
-  return collaborators.some((c) => c.list_id === listId);
-}
+export async function saveList(list) {
+  const userId = await getUserId();
+  const { data: newList, error } = await supabase
+    .from("lists")
+    .insert({
+      name: list.name,
+      category: list.category,
+      store: normalizeStore(list.store),
+      owner_id: userId,
+    })
+    .select()
+    .single();
+  if (error) throw error;
 
-// ─── Items precargables ───────────────────────────────
-
-const DEFAULT_ITEMS = {
-  supermercado: [
-    { id: crypto.randomUUID(), name: "Leche", unit: "litros" },
-    { id: crypto.randomUUID(), name: "Arroz", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Aceite", unit: "u" },
-    { id: crypto.randomUUID(), name: "Fideos", unit: "u" },
-    { id: crypto.randomUUID(), name: "Azúcar", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Harina", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Sal", unit: "u" },
-    { id: crypto.randomUUID(), name: "Huevos", unit: "u" },
-  ],
-  verduleria: [
-    { id: crypto.randomUUID(), name: "Tomate", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Lechuga", unit: "u" },
-    { id: crypto.randomUUID(), name: "Zanahoria", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Papa", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Cebolla", unit: "kg" },
-    { id: crypto.randomUUID(), name: "Zapallo", unit: "kg" },
-  ],
-  otros: [
-    { id: crypto.randomUUID(), name: "Detergente", unit: "u" },
-    { id: crypto.randomUUID(), name: "Jabón", unit: "u" },
-    { id: crypto.randomUUID(), name: "Papel higiénico", unit: "u" },
-  ],
-};
-
-export function getPreloadedItems(category) {
-  const data = localStorage.getItem(ITEMS_KEY);
-
-  if (!data) {
-    // Primera vez: guardamos los defaults en localStorage
-    localStorage.setItem(ITEMS_KEY, JSON.stringify(DEFAULT_ITEMS));
-    return DEFAULT_ITEMS[category] || [];
+  if (list.items?.length) {
+    const rows = list.items.map((item, index) => ({
+      list_id: newList.id,
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      ver: item.ver || false,
+      position: index,
+    }));
+    const { error: itemsError } = await supabase.from("list_items").insert(rows);
+    if (itemsError) throw itemsError;
   }
 
-  return JSON.parse(data)[category] || [];
+  return getListById(newList.id);
 }
 
-export function savePreloadedItem(category, item) {
-  const data = localStorage.getItem(ITEMS_KEY);
-  const items = data ? JSON.parse(data) : DEFAULT_ITEMS;
-  const newItem = { ...item, id: crypto.randomUUID() };
-  items[category] = [...(items[category] || []), newItem];
-  localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-  return newItem;
-}
+// Sincroniza el array de items de una lista contra la tabla list_items.
+// IMPORTANTE: espera el array COMPLETO de items de la lista (no un diff parcial),
+// igual que antes se guardaba el array entero en localStorage.
+async function syncListItems(listId, items) {
+  const { data: currentItems, error: fetchError } = await supabase
+    .from("list_items")
+    .select("id")
+    .eq("list_id", listId);
+  if (fetchError) throw fetchError;
 
-export function updatePreloadedItem(category, id, data) {
-  const stored = localStorage.getItem(ITEMS_KEY);
-  const items = stored ? JSON.parse(stored) : DEFAULT_ITEMS;
-  items[category] = items[category].map((i) => (i.id === id ? { ...i, ...data } : i));
-  localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-}
+  const currentIds = currentItems.map((i) => i.id);
+  const incomingIds = items.filter((i) => i.id).map((i) => i.id);
+  const toDelete = currentIds.filter((id) => !incomingIds.includes(id));
 
-export function deletePreloadedItem(category, id) {
-  const stored = localStorage.getItem(ITEMS_KEY);
-  const items = stored ? JSON.parse(stored) : DEFAULT_ITEMS;
-  items[category] = items[category].filter((i) => i.id !== id);
-  localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-}
-
-const STORES_KEY = "mandado_stores";
-
-const DEFAULT_STORES = {
-  supermercado: [
-    { id: crypto.randomUUID(), name: "Buenos Días" },
-    { id: crypto.randomUUID(), name: "Carrefour" },
-    { id: crypto.randomUUID(), name: "Disco" },
-  ],
-  verduleria: [],
-  otros: [],
-};
-
-export function getStores(category) {
-  const data = localStorage.getItem(STORES_KEY);
-  if (!data) {
-    localStorage.setItem(STORES_KEY, JSON.stringify(DEFAULT_STORES));
-    return DEFAULT_STORES[category] || [];
+  if (toDelete.length) {
+    const { error: deleteError } = await supabase.from("list_items").delete().in("id", toDelete);
+    if (deleteError) throw deleteError;
   }
-  return JSON.parse(data)[category] || [];
-}
 
-export function saveStore(category, store) {
-  const data = localStorage.getItem(STORES_KEY);
-  const stores = data ? JSON.parse(data) : DEFAULT_STORES;
-  const newStore = { ...store, id: crypto.randomUUID() };
-  stores[category] = [...(stores[category] || []), newStore];
-  localStorage.setItem(STORES_KEY, JSON.stringify(stores));
-  return newStore;
-}
-
-export function deleteStore(category, id) {
-  const data = localStorage.getItem(STORES_KEY);
-  const stores = data ? JSON.parse(data) : DEFAULT_STORES;
-  stores[category] = stores[category].filter((s) => s.id !== id);
-  localStorage.setItem(STORES_KEY, JSON.stringify(stores));
-}
-
-export function copyList(id) {
-  const lists = getAllLists();
-  const currentUser = getCurrentUser();
-  const original = lists.find((l) => l.id === id);
-  if (!original) return null;
-  const copy = {
-    ...original,
-    id: crypto.randomUUID(),
-    name: `${original.name} - copia`,
-    owner_id: currentUser?.id || null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  localStorage.setItem(LISTS_KEY, JSON.stringify([...lists, copy]));
-  return copy;
-}
-
-// ─── Usuarios ─────────────────────────────────────────
-
-const USERS_KEY = "mandado_users";
-const CURRENT_USER_KEY = "mandado_current_user";
-
-export function getUsers() {
-  const data = localStorage.getItem(USERS_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-export function getUserByEmail(email) {
-  const users = getUsers();
-  return users.find((u) => u.email === email.toLowerCase()) || null;
-}
-
-export function registerUser(name, email, password) {
-  const users = getUsers();
-  const exists = users.find((u) => u.email === email.toLowerCase());
-  if (exists) return { error: "Ya existe una cuenta con ese email" };
-  const newUser = {
-    id: crypto.randomUUID(),
-    name,
-    email: email.toLowerCase(),
-    password,
-    createdAt: new Date().toISOString(),
-  };
-  localStorage.setItem(USERS_KEY, JSON.stringify([...users, newUser]));
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-  return { user: newUser };
-}
-
-export function loginUser(email, password) {
-  const user = getUserByEmail(email);
-  if (!user) return { error: "No existe una cuenta con ese email" };
-  if (user.password !== password) return { error: "Contraseña incorrecta" };
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  return { user };
-}
-
-export function logoutUser() {
-  localStorage.removeItem(CURRENT_USER_KEY);
-}
-
-export function getCurrentUser() {
-  const data = localStorage.getItem(CURRENT_USER_KEY);
-  return data ? JSON.parse(data) : null;
-}
-
-export function updateUser(id, data) {
-  const users = getUsers();
-  const updated = users.map((u) => (u.id === id ? { ...u, ...data } : u));
-  localStorage.setItem(USERS_KEY, JSON.stringify(updated));
-  const current = getCurrentUser();
-  if (current?.id === id) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ ...current, ...data }));
-  }
-}
-
-// ─── Colaboradores ────────────────────────────────────
-
-const COLLABORATORS_KEY = "mandado_collaborators";
-
-export function getCollaborators() {
-  const data = localStorage.getItem(COLLABORATORS_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-export function getCollaboratorsByList(listId) {
-  return getCollaborators().filter((c) => c.list_id === listId);
-}
-
-export function getListsByCollaborator(userId) {
-  return getCollaborators().filter((c) => c.user_id === userId);
-}
-
-export function addCollaborator(listId, email) {
-  const user = getUserByEmail(email);
-  if (!user) return { error: "No existe una cuenta con ese email" };
-
-  const currentUser = getCurrentUser();
-  if (user.id === currentUser?.id) return { error: "No podés invitarte a vos mismo" };
-
-  const collaborators = getCollaborators();
-  const exists = collaborators.find((c) => c.list_id === listId && c.user_id === user.id);
-  if (exists) return { error: "Este usuario ya es colaborador" };
-
-  const newCollab = {
-    id: crypto.randomUUID(),
+  const rows = items.map((item, index) => ({
+    ...(item.id && currentIds.includes(item.id) ? { id: item.id } : {}),
     list_id: listId,
-    user_id: user.id,
-    role: "editor",
-    createdAt: new Date().toISOString(),
-  };
-  localStorage.setItem(COLLABORATORS_KEY, JSON.stringify([...collaborators, newCollab]));
-  return { collaborator: newCollab, user };
-}
-
-export function removeCollaborator(listId, userId) {
-  const collaborators = getCollaborators();
-  const filtered = collaborators.filter((c) => !(c.list_id === listId && c.user_id === userId));
-  localStorage.setItem(COLLABORATORS_KEY, JSON.stringify(filtered));
-}
-
-export function isCollaborator(listId) {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return false;
-  const collaborators = getCollaborators();
-  return collaborators.some((c) => c.list_id === listId && c.user_id === currentUser.id);
-}
-
-export function isOwner(listId) {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return false;
-  const list = getListById(listId);
-  return list?.owner_id === currentUser.id;
-}
-
-export function addCollaborators(listId, userIds) {
-  const collaborators = getCollaborators();
-  const newCollabs = userIds.map((userId) => ({
-    id: crypto.randomUUID(),
-    list_id: listId,
-    user_id: userId,
-    role: "editor",
-    createdAt: new Date().toISOString(),
+    name: item.name,
+    quantity: item.quantity,
+    unit: item.unit,
+    price: item.price,
+    ver: item.ver || false,
+    position: index,
   }));
-  localStorage.setItem(COLLABORATORS_KEY, JSON.stringify([...collaborators, ...newCollabs]));
+
+  const { error: upsertError } = await supabase.from("list_items").upsert(rows);
+  if (upsertError) throw upsertError;
 }
 
-// ─── Historial de precios ─────────────────────────────
+export async function updateList(id, data) {
+  const { items, ...listFields } = data;
 
-const PRICE_HISTORY_KEY = "mandado_price_history";
+  if (Object.keys(listFields).length > 0) {
+    const { error } = await supabase
+      .from("lists")
+      .update({ ...listFields, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  }
 
-export function getPriceHistory() {
-  const data = localStorage.getItem(PRICE_HISTORY_KEY);
-  return data ? JSON.parse(data) : {};
+  if (items) {
+    await syncListItems(id, items);
+  }
+
+  return getListById(id);
 }
 
-export function getPriceByName(name) {
-  const history = getPriceHistory();
-  return history[name.toLowerCase()] || null;
+export async function deleteList(id) {
+  const { error } = await supabase.from("lists").delete().eq("id", id);
+  if (error) throw error;
 }
 
-export function savePriceHistory(items) {
-  const history = getPriceHistory();
-  const fecha = new Date().toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+export async function copyList(id) {
+  const original = await getListById(id);
+  return saveList({
+    name: `${original.name} (copia)`,
+    category: original.category,
+    store: original.store,
+    items: original.items.map((item) => ({ ...item, id: undefined, ver: false })),
   });
-  items.forEach((item) => {
-    if (item.price) {
-      history[item.name.toLowerCase()] = {
-        price: item.price,
-        date: fecha,
-      };
+}
+
+export async function isOwner(listId) {
+  const userId = await getUserId();
+  const { data, error } = await supabase.from("lists").select("owner_id").eq("id", listId).single();
+  if (error) return false;
+  return data.owner_id === userId;
+}
+
+export async function isCollaborator(listId) {
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from("collaborators")
+    .select("id")
+    .eq("list_id", listId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data);
+}
+
+export async function isSharedList(listId) {
+  const { data, error } = await supabase.from("collaborators").select("id").eq("list_id", listId);
+  if (error) return false;
+  return data.length > 0;
+}
+
+// ---------- Items precargables ----------
+
+export async function getPreloadedItems(category) {
+  const { data, error } = await supabase.from("preloaded_items").select("*").eq("category", category).order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function savePreloadedItem(category, item) {
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from("preloaded_items")
+    .insert({ ...item, category, owner_id: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePreloadedItem(category, id, data) {
+  const { error } = await supabase.from("preloaded_items").update(data).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deletePreloadedItem(category, id) {
+  const { error } = await supabase.from("preloaded_items").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ---------- Comercios ----------
+
+export async function getStores(category) {
+  const { data, error } = await supabase.from("stores").select("*").eq("category", category).order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function saveStore(category, store) {
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from("stores")
+    .insert({ ...store, category, owner_id: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteStore(category, id) {
+  const { error } = await supabase.from("stores").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ---------- Colaboradores ----------
+
+export async function getProfileByEmail(email) {
+  const { data, error } = await supabase.from("profiles").select("id, name, email").eq("email", email).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function searchProfiles(query) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, email")
+    .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+    .limit(10);
+  if (error) throw error;
+  return data;
+}
+
+export async function getCollaboratorsByList(listId) {
+  const { data, error } = await supabase
+    .from("collaborators")
+    .select("id, user_id, role, created_at, profiles(name, email)")
+    .eq("list_id", listId);
+  if (error) throw error;
+  return data.map((c) => ({
+    id: c.id,
+    list_id: listId,
+    user_id: c.user_id,
+    role: c.role,
+    createdAt: c.created_at,
+    name: c.profiles?.name || "Usuario",
+    email: c.profiles?.email || "",
+  }));
+}
+
+export async function addCollaborator(listId, email) {
+  const profile = await getProfileByEmail(email);
+
+  if (!profile) {
+    return { collaborator: null, error: "No encontramos un usuario registrado con ese email" };
+  }
+
+  const { data, error } = await supabase
+    .from("collaborators")
+    .insert({ list_id: listId, user_id: profile.id, role: "editor" })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      return { collaborator: null, error: "Esa persona ya es colaboradora de esta lista" };
     }
-  });
-  localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(history));
+    return { collaborator: null, error: error.message };
+  }
+
+  return { collaborator: { ...data, name: profile.name, email: profile.email }, error: null };
+}
+
+export async function addCollaborators(listId, userIds) {
+  const rows = userIds.map((userId) => ({ list_id: listId, user_id: userId, role: "editor" }));
+  const { error } = await supabase.from("collaborators").insert(rows);
+  if (error) throw error;
+}
+
+export async function removeCollaborator(listId, userId) {
+  const { error } = await supabase.from("collaborators").delete().match({ list_id: listId, user_id: userId });
+  if (error) throw error;
+}
+
+// ---------- Historial de precios ----------
+
+export async function getPriceHistory() {
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from("price_history")
+    .select("*")
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getPriceByName(name) {
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from("price_history")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("item_name", name)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function savePriceHistory(items) {
+  const userId = await getUserId();
+  const rows = items
+    .filter((item) => item.price)
+    .map((item) => ({
+      item_name: item.name,
+      price: item.price,
+      user_id: userId,
+    }));
+  if (!rows.length) return;
+  const { error } = await supabase.from("price_history").insert(rows);
+  if (error) throw error;
 }

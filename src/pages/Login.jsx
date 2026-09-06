@@ -5,23 +5,36 @@ import "./Auth.css";
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!email.trim() || !password.trim()) {
       setError("Completá todos los campos");
       return;
     }
-    const result = login(email, password);
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+
     if (result.error) {
       setError(result.error);
       return;
     }
     navigate("/");
+  }
+
+  async function handleGoogleLogin() {
+    setError("");
+    const result = await loginWithGoogle();
+    if (result.error) {
+      setError(result.error);
+    }
+    // Si no hay error, Supabase redirige a Google. No hace falta navigate() acá.
   }
 
   return (
@@ -62,18 +75,17 @@ function Login() {
           />
         </div>
 
-        <button className="auth-btn-primary" onClick={handleLogin}>
-          Ingresar
+        <button className="auth-btn-primary" onClick={handleLogin} disabled={loading}>
+          {loading ? "Ingresando..." : "Ingresar"}
         </button>
 
         <div className="auth-divider">
           <span>o</span>
         </div>
 
-        <button className="auth-btn-google" disabled>
+        <button className="auth-btn-google" onClick={handleGoogleLogin}>
           <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="Google" />
           Continuar con Google
-          <span className="auth-btn-coming">próximamente</span>
         </button>
 
         <p className="auth-link-text">

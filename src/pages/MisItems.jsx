@@ -26,9 +26,9 @@ function MisItems() {
   const { toasts, success } = useToast();
   const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!newName.trim()) return;
-    addItem({ name: newName.trim(), unit: newUnit });
+    await addItem({ name: newName.trim(), unit: newUnit });
     setNewName("");
     setNewUnit("u");
   }
@@ -38,15 +38,15 @@ function MisItems() {
     setEditData({ name: item.name, unit: item.unit });
   }
 
-  function handleEditSave(id) {
-    editItem(id, editData);
+  async function handleEditSave(id) {
+    await editItem(id, editData);
     setEditingId(null);
   }
 
   async function handleDelete(id) {
     const confirmed = await ask("¿Eliminar este item?");
     if (confirmed) {
-      removeItem(id);
+      await removeItem(id);
       success("Item eliminado");
     }
   }

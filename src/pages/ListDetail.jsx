@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IconChevronLeft, IconPencil, IconBrandWhatsapp, IconUsers } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
-import { useLists } from "../hooks/useLists";
+import { useLists, useCollaborators } from "../hooks/useLists";
+import { useAuth } from "../hooks/useAuth";
 import { sendWhatsApp } from "../utils/whatsapp";
-import { isOwner, isCollaborator, getCollaboratorsByList, getUsers, getCurrentUser } from "../services/storage";
 import "./ListDetail.css";
 
 const CATEGORY_LABELS = {
@@ -16,33 +16,46 @@ const CATEGORY_LABELS = {
 function ListDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { getById } = useLists();
+  const { getById, fetchById } = useLists();
+  const { user } = useAuth();
+  const { collaborators } = useCollaborators(id);
 
   const [list, setList] = useState(null);
 
-  const owner = isOwner(id);
-  const collab = isCollaborator(id);
-  const canEdit = owner || collab;
-
-  const currentUser = getCurrentUser();
-  const collaborators = getCollaboratorsByList(id);
-  const users = getUsers();
-
-  const ownerUser = users.find((u) => u.id === list?.owner_id);
-  const isShared = collab || collaborators.length > 0;
-
-  const collabNames = collaborators.map((c) => users.find((u) => u.id === c.user_id)?.name).filter(Boolean);
-
   useEffect(() => {
-    const found = getById(id);
-    if (!found) {
-      navigate("/");
-      return;
+    let cancelled = false;
+
+    async function load() {
+      // Primero busca en el estado ya cargado (rápido, sin ir a la red)
+      const cached = getById(id);
+      if (cached) {
+        setList(cached);
+        return;
+      }
+      // Si no está (ej: entraste directo por URL antes de que cargue la lista completa),
+      // lo trae puntual desde Supabase
+      try {
+        const found = await fetchById(id);
+        if (!cancelled) setList(found);
+      } catch {
+        if (!cancelled) navigate("/");
+      }
     }
-    setList(found);
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (!list) return null;
+  if (!list || !user) return null;
+
+  const owner = list.owner_id === user.id;
+  const collab = collaborators.some((c) => c.user_id === user.id);
+  const canEdit = owner || collab;
+  const isShared = collaborators.length > 0;
+  const collabNames = collaborators.map((c) => c.name).filter(Boolean);
 
   return (
     <div className="page">
@@ -66,9 +79,9 @@ function ListDetail() {
       {isShared && (
         <div className="detail-shared-info">
           <IconUsers size={14} color="#4A6741" />
-          {collab && ownerUser && (
+          {collab && list.ownerName && (
             <span>
-              Compartida por <strong>{ownerUser.name}</strong>
+              Compartida por <strong>{list.ownerName}</strong>
             </span>
           )}
           {owner && collabNames.length > 0 && (

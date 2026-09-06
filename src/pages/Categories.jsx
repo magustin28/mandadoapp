@@ -7,7 +7,6 @@ import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
-import { getListsByCollaborator, getCurrentUser, isSharedList } from "../services/storage";
 
 const CATEGORIES = [
   { key: "supermercado", label: "Supermercado", icon: <IconBuildingStore size={18} /> },
@@ -18,26 +17,23 @@ const CATEGORIES = [
 function Categories() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { lists, getByCategory, removeList, duplicateList } = useLists();
+  const { getByCategory, removeList, duplicateList } = useLists();
 
   const activeCat = searchParams.get("cat") || "supermercado";
   const filteredLists = getByCategory(activeCat).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   const { toasts, success } = useToast();
   const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
 
-  const currentUser = getCurrentUser();
-  const collabListIds = currentUser ? getListsByCollaborator(currentUser.id).map((c) => c.list_id) : [];
-
   async function handleDelete(id) {
     const confirmed = await ask("¿Eliminar esta lista?");
     if (confirmed) {
-      removeList(id);
+      await removeList(id);
       success("Lista eliminada");
     }
   }
 
-  function handleCopy(id) {
-    const copy = duplicateList(id);
+  async function handleCopy(id) {
+    const copy = await duplicateList(id);
     navigate(`/lista/${copy.id}`);
   }
 
@@ -71,7 +67,7 @@ function Categories() {
                   {" "}
                   <p className="list-name">
                     {list.name}
-                    {isSharedList(list.id) && (
+                    {list.isShared && (
                       <IconUsers size={14} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle", flexShrink: 0 }} />
                     )}
                   </p>

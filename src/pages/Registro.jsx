@@ -5,15 +5,17 @@ import "./Auth.css";
 
 function Registro() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleRegister() {
+  async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError("Completá todos los campos");
       return;
@@ -26,12 +28,31 @@ function Registro() {
       setError("La contraseña debe tener al menos 4 caracteres");
       return;
     }
-    const result = register(name, email, password);
+
+    setLoading(true);
+    const result = await register(name, email, password);
+    setLoading(false);
+
     if (result.error) {
       setError(result.error);
       return;
     }
+
+    if (result.needsEmailConfirmation) {
+      setInfo("Te enviamos un mail para confirmar tu cuenta. Revisá tu correo para poder ingresar.");
+      return;
+    }
+
     navigate("/");
+  }
+
+  async function handleGoogleRegister() {
+    setError("");
+    const result = await loginWithGoogle();
+    if (result.error) {
+      setError(result.error);
+    }
+    // Si no hay error, Supabase redirige a Google. No hace falta navigate() acá.
   }
 
   return (
@@ -43,6 +64,7 @@ function Registro() {
 
       <div className="auth-form">
         {error && <div className="auth-error">{error}</div>}
+        {info && <div className="auth-info">{info}</div>}
 
         <div className="auth-field">
           <label className="auth-label">Nombre</label>
@@ -100,18 +122,17 @@ function Registro() {
           />
         </div>
 
-        <button className="auth-btn-primary" onClick={handleRegister}>
-          Crear cuenta
+        <button className="auth-btn-primary" onClick={handleRegister} disabled={loading}>
+          {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
         <div className="auth-divider">
           <span>o</span>
         </div>
 
-        <button className="auth-btn-google" disabled>
+        <button className="auth-btn-google" onClick={handleGoogleRegister}>
           <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="Google" />
           Registrarse con Google
-          <span className="auth-btn-coming">próximamente</span>
         </button>
 
         <p className="auth-link-text">

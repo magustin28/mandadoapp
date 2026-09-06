@@ -14,18 +14,10 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
-import { useLists, usePreloadedItems, useStores, useCollaborators } from "../hooks/useLists";
+import { useLists, usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/useLists";
+import { useAuth } from "../hooks/useAuth";
 import { sendWhatsApp } from "../utils/whatsapp";
-import {
-  isOwner,
-  isCollaborator,
-  getUsers,
-  getUserByEmail,
-  addCollaborators,
-  getCurrentUser,
-  getPriceByName,
-  getCollaboratorsByList,
-} from "../services/storage";
+import { getProfileByEmail, searchProfiles, addCollaborators } from "../services/storage";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
@@ -45,7 +37,8 @@ function ListForm() {
   const { id } = useParams();
   const isEditing = Boolean(id);
 
-  const { getById, addList, editList, removeList } = useLists();
+  const { user } = useAuth();
+  const { getById, fetchById, addList, editList, removeList } = useLists();
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("supermercado");
@@ -54,27 +47,25 @@ function ListForm() {
   const [loaded, setLoaded] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
 
+  // Metadata de la lista cargada (para saber quién es el dueño y su nombre)
+  const [ownerId, setOwnerId] = useState(null);
+  const [ownerNameFromList, setOwnerNameFromList] = useState(null);
+
   const { items: preloaded } = usePreloadedItems(category);
   const { stores } = useStores(category);
+  const { getByName: getPriceByName } = usePriceHistory();
 
   const { toasts, success, error } = useToast();
   const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
 
   const [showCollabPanel, setShowCollabPanel] = useState(false);
 
-  const owner = isOwner(id);
-  const collab = isCollaborator(id);
-
   const { collaborators, add, remove } = useCollaborators(id);
-  const canEdit = owner || !id;
 
-  const ownerName = collab
-    ? (() => {
-        const list = getById(id);
-        const users = getUsers();
-        return users.find((u) => u.id === list?.owner_id)?.name || "Otro usuario";
-      })()
-    : null;
+  const owner = id && ownerId ? ownerId === user?.id : false;
+  const collab = collaborators.some((c) => c.user_id === user?.id);
+  const canEdit = owner || !id;
+  const ownerName = collab ? ownerNameFromList : null;
 
   const [pendingCollabs, setPendingCollabs] = useState([]);
   const [emailCollab, setEmailCollab] = useState("");
@@ -96,20 +87,40 @@ function ListForm() {
   }
 
   useEffect(() => {
-    if (isEditing) {
-      const list = getById(id);
+    if (!isEditing) {
+      setName(getDefaultName("supermercado", null));
+      setLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function load() {
+      // Primero busca en cache (ya cargado por useLists); si no está
+      // todavía (ej: entraste directo por URL), lo trae puntual.
+      const cached = getById(id);
+      const list = cached || (await fetchById(id).catch(() => null));
+
       if (!list) {
-        navigate("/");
+        if (!cancelled) navigate("/");
         return;
       }
+      if (cancelled) return;
+
       setName(list.name);
       setCategory(list.category);
       setItems(list.items || []);
-      setSelectedStore(list.store || null); // ← recuperar store
-    } else {
-      setName(getDefaultName("supermercado", null));
+      setSelectedStore(list.store || null);
+      setOwnerId(list.owner_id);
+      setOwnerNameFromList(list.ownerName);
+      setLoaded(true);
     }
-    setLoaded(true);
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   function handleStoreSelect(store) {
@@ -196,16 +207,16 @@ function ListForm() {
     return true;
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!validate()) return;
     if (isEditing) {
-      editList(id, { name, category, items, store: selectedStore });
+      await editList(id, { name, category, items, store: selectedStore });
       success("Lista guardada");
       setTimeout(() => navigate(`/categorias?cat=${category}`), 1000);
     } else {
-      const newList = addList({ name, category, items, store: selectedStore });
+      const newList = await addList({ name, category, items, store: selectedStore });
       if (pendingCollabs.length > 0) {
-        addCollaborators(
+        await addCollaborators(
           newList.id,
           pendingCollabs.map((c) => c.id),
         );
@@ -215,16 +226,16 @@ function ListForm() {
     }
   }
 
-  function handleWhatsApp() {
+  async function handleWhatsApp() {
     if (!validate()) return;
     if (isEditing) {
-      editList(id, { name, category, items, store: selectedStore });
+      await editList(id, { name, category, items, store: selectedStore });
       sendWhatsApp({ name, category, items });
       setTimeout(() => navigate(`/categorias?cat=${category}`), 500);
     } else {
-      const newList = addList({ name, category, items, store: selectedStore });
+      const newList = await addList({ name, category, items, store: selectedStore });
       if (pendingCollabs.length > 0) {
-        addCollaborators(
+        await addCollaborators(
           newList.id,
           pendingCollabs.map((c) => c.id),
         );
@@ -237,39 +248,38 @@ function ListForm() {
   async function handleDelete() {
     const confirmed = await ask("¿Eliminar esta lista?");
     if (confirmed) {
-      removeList(id);
+      await removeList(id);
       navigate("/categorias");
     }
   }
 
   if (isEditing && !loaded) return null;
 
-  function handleAddCollaborator() {
+  async function handleAddCollaborator() {
     if (!emailCollab.trim()) return;
     if (!isEditing) {
-      const user = getUserByEmail(emailCollab.trim());
-      if (!user) {
+      const profile = await getProfileByEmail(emailCollab.trim());
+      if (!profile) {
         error("No existe una cuenta con ese email");
         return;
       }
-      const currentUser = getCurrentUser();
-      if (user.id === currentUser?.id) {
+      if (profile.id === user?.id) {
         error("No podés invitarte a vos mismo");
         return;
       }
-      if (pendingCollabs.find((c) => c.email === user.email)) {
+      if (pendingCollabs.find((c) => c.email === profile.email)) {
         error("Ya está en la lista");
         return;
       }
-      setPendingCollabs([...pendingCollabs, { id: user.id, name: user.name, email: user.email }]);
+      setPendingCollabs([...pendingCollabs, { id: profile.id, name: profile.name, email: profile.email }]);
       setEmailCollab("");
-      success(`${user.name} agregado`);
+      success(`${profile.name} agregado`);
     } else {
-      const result = add(emailCollab.trim());
+      const result = await add(emailCollab.trim());
       if (result.error) {
         error(result.error);
       } else {
-        success(`${result.user.name} agregado como colaborador`);
+        success(`${result.collaborator.name} agregado como colaborador`);
         setEmailCollab("");
       }
     }
@@ -277,7 +287,7 @@ function ListForm() {
 
   async function handleRemoveCollaborator(userId, name) {
     const confirmed = await ask(`¿Eliminar a ${name} como colaborador?`);
-    if (confirmed) remove(userId);
+    if (confirmed) await remove(userId);
   }
 
   function handleToggleExpand(itemId) {
@@ -300,35 +310,33 @@ function ListForm() {
     );
   }
 
-  function handleEmailChange(value) {
+  async function handleEmailChange(value) {
     setEmailCollab(value);
     if (value.trim().length < 2) {
       setUserSuggestions([]);
       return;
     }
-    const currentUser = getCurrentUser();
-    const allUsers = getUsers();
-    const collabIds = (isEditing ? collaborators : pendingCollabs).map((c) => c.id || c.user_id);
-    const filtered = allUsers.filter(
-      (u) =>
-        u.id !== currentUser?.id &&
-        !collabIds.includes(u.id) &&
-        (u.name.toLowerCase().includes(value.toLowerCase()) || u.email.toLowerCase().includes(value.toLowerCase())),
-    );
-    setUserSuggestions(filtered);
+    try {
+      const results = await searchProfiles(value.trim());
+      const collabIds = (isEditing ? collaborators : pendingCollabs).map((c) => c.id || c.user_id);
+      const filtered = results.filter((u) => u.id !== user?.id && !collabIds.includes(u.id));
+      setUserSuggestions(filtered);
+    } catch (err) {
+      console.error("Error buscando usuarios:", err);
+    }
   }
 
-  function handleSelectSuggestion(user) {
-    setEmailCollab(user.email);
+  async function handleSelectSuggestion(suggested) {
+    setEmailCollab(suggested.email);
     setUserSuggestions([]);
     if (!isEditing) {
-      if (pendingCollabs.find((c) => c.id === user.id)) return;
-      setPendingCollabs([...pendingCollabs, { id: user.id, name: user.name, email: user.email }]);
+      if (pendingCollabs.find((c) => c.id === suggested.id)) return;
+      setPendingCollabs([...pendingCollabs, { id: suggested.id, name: suggested.name, email: suggested.email }]);
       setEmailCollab("");
     } else {
-      const result = add(user.email);
+      const result = await add(suggested.email);
       if (result.error) error(result.error);
-      else success(`${user.name} agregado como colaborador`);
+      else success(`${result.collaborator.name} agregado como colaborador`);
       setEmailCollab("");
     }
   }
@@ -415,75 +423,78 @@ function ListForm() {
           </>
         )}
         <div className="items-container">
-          {items.map((item) => (
-            <div key={item.id} className="item-row-wrap">
-              <div className="item-row">
-                <input
-                  className="item-input-name"
-                  type="text"
-                  placeholder="Item..."
-                  value={item.name}
-                  onChange={(e) => handleItemNameChange(item.id, e.target.value)}
-                />
-                {getPriceByName(item.name) && !item.expanded && (
-                  <span className="item-price-badge">${getPriceByName(item.name).price.toLocaleString("es-AR")}</span>
-                )}
-                <button className={`btn-ver ${item.ver ? "btn-ver--active" : ""}`} onClick={() => handleItemChange(item.id, "ver", !item.ver)}>
-                  VER
-                </button>
-                <button className="btn-info-expand" onClick={() => handleToggleExpand(item.id)}>
-                  {item.expanded ? "−" : "+"}
-                </button>
-                <button className="item-del" onClick={() => handleRemoveItem(item.id)}>
-                  <IconTrash size={16} color="#C4BCB0" />
-                </button>
-              </div>
+          {items.map((item) => {
+            const priceInfo = getPriceByName(item.name);
+            return (
+              <div key={item.id} className="item-row-wrap">
+                <div className="item-row">
+                  <input
+                    className="item-input-name"
+                    type="text"
+                    placeholder="Item..."
+                    value={item.name}
+                    onChange={(e) => handleItemNameChange(item.id, e.target.value)}
+                  />
+                  {priceInfo && !item.expanded && (
+                    <span className="item-price-badge">${Number(priceInfo.price).toLocaleString("es-AR")}</span>
+                  )}
+                  <button className={`btn-ver ${item.ver ? "btn-ver--active" : ""}`} onClick={() => handleItemChange(item.id, "ver", !item.ver)}>
+                    VER
+                  </button>
+                  <button className="btn-info-expand" onClick={() => handleToggleExpand(item.id)}>
+                    {item.expanded ? "−" : "+"}
+                  </button>
+                  <button className="item-del" onClick={() => handleRemoveItem(item.id)}>
+                    <IconTrash size={16} color="#C4BCB0" />
+                  </button>
+                </div>
 
-              {item.expanded && (
-                <div className="item-row-extra">
-                  <div className="item-extra-field">
-                    <span className="item-extra-label">Cant.</span>
-                    <input
-                      className="item-input-qty"
-                      type="number"
-                      min="1"
-                      placeholder="—"
-                      value={item.quantity || ""}
-                      onChange={(e) => handleItemChange(item.id, "quantity", Number(e.target.value) || null)}
-                    />
-                  </div>
-                  <div className="item-extra-field">
-                    <span className="item-extra-label">Unidad</span>
-                    <input
-                      className="item-input-unit"
-                      type="text"
-                      placeholder="kg, u..."
-                      value={item.unit || ""}
-                      onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
-                    />
-                  </div>
-                  <div className="item-extra-field">
-                    <span className="item-extra-label">Precio</span>
-                    <div className="item-price-wrap">
-                      <span className="item-price-symbol">$</span>
+                {item.expanded && (
+                  <div className="item-row-extra">
+                    <div className="item-extra-field">
+                      <span className="item-extra-label">Cant.</span>
                       <input
-                        className="item-input-price"
+                        className="item-input-qty"
                         type="number"
-                        placeholder="0"
-                        value={item.price || ""}
-                        onChange={(e) => handleItemChange(item.id, "price", Number(e.target.value) || null)}
+                        min="1"
+                        placeholder="—"
+                        value={item.quantity || ""}
+                        onChange={(e) => handleItemChange(item.id, "quantity", Number(e.target.value) || null)}
                       />
                     </div>
-                    {getPriceByName(item.name) && (
-                      <span className="item-price-hint">
-                        Último: ${getPriceByName(item.name).price.toLocaleString("es-AR")} ({getPriceByName(item.name).date})
-                      </span>
-                    )}
+                    <div className="item-extra-field">
+                      <span className="item-extra-label">Unidad</span>
+                      <input
+                        className="item-input-unit"
+                        type="text"
+                        placeholder="kg, u..."
+                        value={item.unit || ""}
+                        onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
+                      />
+                    </div>
+                    <div className="item-extra-field">
+                      <span className="item-extra-label">Precio</span>
+                      <div className="item-price-wrap">
+                        <span className="item-price-symbol">$</span>
+                        <input
+                          className="item-input-price"
+                          type="number"
+                          placeholder="0"
+                          value={item.price || ""}
+                          onChange={(e) => handleItemChange(item.id, "price", Number(e.target.value) || null)}
+                        />
+                      </div>
+                      {priceInfo && (
+                        <span className="item-price-hint">
+                          Último: ${Number(priceInfo.price).toLocaleString("es-AR")} ({new Date(priceInfo.date).toLocaleDateString("es-AR")})
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
           <button className="add-item-row" onClick={handleAddItem}>
             <span className="add-item-icon">
               <IconPlus size={16} color="#4A6741" />
