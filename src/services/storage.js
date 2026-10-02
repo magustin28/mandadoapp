@@ -108,8 +108,14 @@ async function syncListItems(listId, items) {
     if (deleteError) throw deleteError;
   }
 
+  // Siempre mandamos un id explícito por fila (el que ya trae el item desde
+  // el form, generado con crypto.randomUUID() al crearlo en memoria; o uno
+  // nuevo acá como respaldo). Si algunas filas tuvieran id y otras no,
+  // upsert() arma una sola consulta con columnas fijas para todo el lote,
+  // y las filas sin id terminan mandando NULL explícito en vez de dejar que
+  // la base use su default — eso rompía la constraint de la primary key.
   const rows = items.map((item, index) => ({
-    ...(item.id && currentIds.includes(item.id) ? { id: item.id } : {}),
+    id: item.id || crypto.randomUUID(),
     list_id: listId,
     name: item.name,
     quantity: item.quantity,

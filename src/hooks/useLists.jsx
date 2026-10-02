@@ -55,14 +55,29 @@ export function ListsProvider({ children }) {
   useEffect(() => {
     if (!user) return;
 
+    // Guardar una lista genera VARIOS eventos de Realtime seguidos (borra
+    // items, inserta/actualiza items, actualiza la lista). Si refrescáramos
+    // en cada evento individual, un refresh disparado a mitad de esa
+    // secuencia podría llegar tarde y pisar el estado ya correcto con uno
+    // incompleto. Agrupamos la ráfaga con un debounce y refrescamos una
+    // sola vez, una vez que se calmó.
+    let debounceTimer;
+    function scheduleRefresh() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(refresh, 400);
+    }
+
     const channel = supabase
       .channel("lists-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "lists" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "list_items" }, refresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "collaborators" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "lists" }, scheduleRefresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "list_items" }, scheduleRefresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "collaborators" }, scheduleRefresh)
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
   }, [user, refresh]);
 
   async function addList(list) {

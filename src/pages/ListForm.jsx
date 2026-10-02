@@ -12,6 +12,7 @@ import {
   IconUsers,
   IconUserPlus,
   IconX,
+  IconPencil,
 } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import { useLists, usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/useLists";
@@ -46,6 +47,12 @@ function ListForm() {
   const [showPreloaded, setShowPreloaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
+
+  // Al editar una lista existente, el título arranca bloqueado (hay que
+  // clickear el lápiz para tocarlo) — así cambiar de categoría o comercio
+  // no lo pisa sin querer. Al crear una lista nueva, arranca desbloqueado
+  // como antes (se autogenera mientras la armás).
+  const [titleLocked, setTitleLocked] = useState(isEditing);
 
   // Metadata de la lista cargada (para saber quién es el dueño y su nombre)
   const [ownerId, setOwnerId] = useState(null);
@@ -126,20 +133,26 @@ function ListForm() {
   function handleStoreSelect(store) {
     if (selectedStore?.id === store.id) {
       setSelectedStore(null);
-      setName(getDefaultName(category, null));
+      if (!isEditing) setName(getDefaultName(category, null));
     } else {
       setSelectedStore(store);
-      setName(getDefaultName(category, store));
+      if (!isEditing) setName(getDefaultName(category, store));
     }
   }
 
   function handleCategoryChange(key) {
-    const preloadedNames = preloaded.map((p) => p.name);
-    const nonPreloaded = items.filter((i) => !preloadedNames.includes(i.name));
-    setItems(nonPreloaded);
+    if (!isEditing) {
+      // Solo al crear: saca del carrito los items que eran sugerencias de
+      // la categoría anterior y sugiere un nombre nuevo. Al editar una
+      // lista ya guardada, cambiar de categoría no debe tocar ni el
+      // nombre ni los items que ya armaste.
+      const preloadedNames = preloaded.map((p) => p.name);
+      const nonPreloaded = items.filter((i) => !preloadedNames.includes(i.name));
+      setItems(nonPreloaded);
+      setName(getDefaultName(key, null));
+    }
     setCategory(key);
     setSelectedStore(null);
-    setName(getDefaultName(key, null));
   }
 
   function handleAddItem() {
@@ -360,15 +373,21 @@ function ListForm() {
 
       <div className="listform-content">
         <p className="section-label">Nombre de la lista</p>
-        <input
-          className="input-name"
-          type="text"
-          placeholder="Ej: Compras del martes..."
-          value={name}
-          onChange={(e) => canEdit && setName(e.target.value)}
-          readOnly={!canEdit}
-          style={!canEdit ? { opacity: 0.7 } : {}}
-        />
+        <div className="title-row">
+          <input
+            className={`input-name ${!canEdit || titleLocked ? "input-name--locked" : ""}`}
+            type="text"
+            placeholder="Ej: Compras del martes..."
+            value={name}
+            onChange={(e) => canEdit && !titleLocked && setName(e.target.value)}
+            readOnly={!canEdit || titleLocked}
+          />
+          {canEdit && titleLocked && (
+            <button type="button" className="btn-edit-title" onClick={() => setTitleLocked(false)}>
+              <IconPencil size={18} color="#4A6741" />
+            </button>
+          )}
+        </div>
         <p className="section-label">Categoría</p>
         <div className="cat-tabs-scroll">
           {CATEGORIES.map(({ key, label, icon }) => (
@@ -407,7 +426,10 @@ function ListForm() {
             <div className="panel-overlay" onClick={() => setShowPreloaded(false)} />
             <div className="preloaded-list">
               {preloaded.map((p) => {
-                const selected = items.find((i) => i.name === p.name);
+                // El resaltado de "ya elegido" solo tiene sentido mientras
+                // armás una lista nueva. Al editar una existente confunde
+                // (parece que hay que volver a elegir algo que ya está).
+                const selected = !isEditing && items.find((i) => i.name === p.name);
                 return (
                   <button
                     key={p.id}

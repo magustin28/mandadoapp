@@ -3,6 +3,15 @@ import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext(null);
 
+// Después del redirect de Google Auth, la URL trae el token en el hash
+// (#access_token=...). Supabase lo lee para armar la sesión, pero a veces
+// deja un "#" vacío colgando en la URL — lo limpiamos a mano.
+function cleanAuthHash() {
+  if (window.location.hash) {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+}
+
 async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
@@ -22,14 +31,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        setUser(profile);
-      }
-      setLoading(false);
-    });
-
+    // Un solo mecanismo para la sesión (inicial y cambios posteriores).
+    // onAuthStateChange ya dispara un evento "INITIAL_SESSION" al montar,
+    // con la sesión persistida (y refrescada si hacía falta) — no hace
+    // falta un getSession() aparte, que competía con esto y podía pisar
+    // el estado si uno de los dos terminaba antes que el otro.
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
@@ -38,6 +44,7 @@ export function AuthProvider({ children }) {
         setUser(null);
       }
       setLoading(false);
+      cleanAuthHash();
     });
 
     return () => listener.subscription.unsubscribe();

@@ -608,3 +608,34 @@
 .collab-suggestion-row:hover {
   background: var(--color-crema);
 }
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.title-row .input-name {
+  flex: 1;
+}
+
+.input-name--locked {
+  opacity: 0.7;
+}
+
+.btn-edit-title {
+  background: var(--color-blanco);
+  border: 1px solid var(--color-crema-borde);
+  border-radius: var(--radius-btn);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.btn-edit-title:hover {
+  background: var(--color-crema);
+}
