@@ -134,6 +134,10 @@ async function syncListItems(listId, items) {
 export async function updateList(id, data) {
   const { items, ...listFields } = data;
 
+  if (listFields.store !== undefined) {
+    listFields.store = normalizeStore(listFields.store);
+  }
+
   if (Object.keys(listFields).length > 0) {
     const { error } = await supabase
       .from("lists")
@@ -289,13 +293,16 @@ export async function removeCollaborator(listId, userId) {
 
 // ---------- Historial de precios ----------
 
+const PRICE_HISTORY_LIMIT = 500;
+
 export async function getPriceHistory() {
   const userId = await getUserId();
   const { data, error } = await supabase
     .from("price_history")
     .select("*")
     .eq("user_id", userId)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(PRICE_HISTORY_LIMIT);
   if (error) throw error;
   return data;
 }

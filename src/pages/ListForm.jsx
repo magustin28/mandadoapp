@@ -54,6 +54,7 @@ function ListForm() {
   // no lo pisa sin querer. Al crear una lista nueva, arranca desbloqueado
   // como antes (se autogenera mientras la armás).
   const [titleLocked, setTitleLocked] = useState(isEditing);
+  const [storeLocked, setStoreLocked] = useState(isEditing);
 
   // Metadata de la lista cargada (para saber quién es el dueño y su nombre)
   const [ownerId, setOwnerId] = useState(null);
@@ -80,7 +81,7 @@ function ListForm() {
 
   const [userSuggestions, setUserSuggestions] = useState([]);
 
-  function getDefaultName(cat, store) {
+  function getDefaultName(cat, storeName) {
     const fecha = new Date().toLocaleDateString("es-AR", {
       day: "2-digit",
       month: "2-digit",
@@ -90,7 +91,7 @@ function ListForm() {
       verduleria: "Verdulería",
       otros: "Otros",
     }[cat];
-    if (store) return `${catLabel} ${store.name} - ${fecha}`;
+    if (storeName) return `${catLabel} ${storeName} - ${fecha}`;
     return `${catLabel} - ${fecha}`;
   }
 
@@ -132,12 +133,12 @@ function ListForm() {
   }, [id]);
 
   function handleStoreSelect(store) {
-    if (selectedStore?.id === store.id) {
+    if (selectedStore === store.name) {
       setSelectedStore(null);
       if (!isEditing) setName(getDefaultName(category, null));
     } else {
-      setSelectedStore(store);
-      if (!isEditing) setName(getDefaultName(category, store));
+      setSelectedStore(store.name);
+      if (!isEditing) setName(getDefaultName(category, store.name));
     }
   }
 
@@ -153,7 +154,7 @@ function ListForm() {
       setName(getDefaultName(key, null));
     }
     setCategory(key);
-    setSelectedStore(null);
+    if (!isEditing) setSelectedStore(null);
   }
 
   function handleAddItem() {
@@ -281,9 +282,14 @@ function ListForm() {
 
   async function handleDelete() {
     const confirmed = await ask("¿Eliminar esta lista?");
-    if (confirmed) {
+    if (!confirmed) return;
+
+    try {
       await removeList(id);
       navigate("/categorias");
+    } catch (err) {
+      console.error("Error eliminando la lista:", err);
+      error("No se pudo eliminar la lista. Intentá de nuevo.");
     }
   }
 
@@ -291,37 +297,50 @@ function ListForm() {
 
   async function handleAddCollaborator() {
     if (!emailCollab.trim()) return;
-    if (!isEditing) {
-      const profile = await getProfileByEmail(emailCollab.trim());
-      if (!profile) {
-        error("No existe una cuenta con ese email");
-        return;
-      }
-      if (profile.id === user?.id) {
-        error("No podés invitarte a vos mismo");
-        return;
-      }
-      if (pendingCollabs.find((c) => c.email === profile.email)) {
-        error("Ya está en la lista");
-        return;
-      }
-      setPendingCollabs([...pendingCollabs, { id: profile.id, name: profile.name, email: profile.email }]);
-      setEmailCollab("");
-      success(`${profile.name} agregado`);
-    } else {
-      const result = await add(emailCollab.trim());
-      if (result.error) {
-        error(result.error);
-      } else {
-        success(`${result.collaborator.name} agregado como colaborador`);
+
+    try {
+      if (!isEditing) {
+        const profile = await getProfileByEmail(emailCollab.trim());
+        if (!profile) {
+          error("No existe una cuenta con ese email");
+          return;
+        }
+        if (profile.id === user?.id) {
+          error("No podés invitarte a vos mismo");
+          return;
+        }
+        if (pendingCollabs.find((c) => c.email === profile.email)) {
+          error("Ya está en la lista");
+          return;
+        }
+        setPendingCollabs([...pendingCollabs, { id: profile.id, name: profile.name, email: profile.email }]);
         setEmailCollab("");
+        success(`${profile.name} agregado`);
+      } else {
+        const result = await add(emailCollab.trim());
+        if (result.error) {
+          error(result.error);
+        } else {
+          success(`${result.collaborator.name} agregado como colaborador`);
+          setEmailCollab("");
+        }
       }
+    } catch (err) {
+      console.error("Error agregando colaborador:", err);
+      error("No se pudo agregar el colaborador. Intentá de nuevo.");
     }
   }
 
   async function handleRemoveCollaborator(userId, name) {
     const confirmed = await ask(`¿Eliminar a ${name} como colaborador?`);
-    if (confirmed) await remove(userId);
+    if (!confirmed) return;
+
+    try {
+      await remove(userId);
+    } catch (err) {
+      console.error("Error eliminando colaborador:", err);
+      error("No se pudo eliminar el colaborador. Intentá de nuevo.");
+    }
   }
 
   function handleToggleExpand(itemId) {
@@ -363,15 +382,21 @@ function ListForm() {
   async function handleSelectSuggestion(suggested) {
     setEmailCollab(suggested.email);
     setUserSuggestions([]);
-    if (!isEditing) {
-      if (pendingCollabs.find((c) => c.id === suggested.id)) return;
-      setPendingCollabs([...pendingCollabs, { id: suggested.id, name: suggested.name, email: suggested.email }]);
-      setEmailCollab("");
-    } else {
-      const result = await add(suggested.email);
-      if (result.error) error(result.error);
-      else success(`${result.collaborator.name} agregado como colaborador`);
-      setEmailCollab("");
+
+    try {
+      if (!isEditing) {
+        if (pendingCollabs.find((c) => c.id === suggested.id)) return;
+        setPendingCollabs([...pendingCollabs, { id: suggested.id, name: suggested.name, email: suggested.email }]);
+        setEmailCollab("");
+      } else {
+        const result = await add(suggested.email);
+        if (result.error) error(result.error);
+        else success(`${result.collaborator.name} agregado como colaborador`);
+        setEmailCollab("");
+      }
+    } catch (err) {
+      console.error("Error agregando colaborador:", err);
+      error("No se pudo agregar el colaborador. Intentá de nuevo.");
     }
   }
 
@@ -420,13 +445,28 @@ function ListForm() {
         </div>
         {CATEGORIES_WITH_STORES.includes(category) && (
           <>
-            <p className="section-label">Comercio</p>
+            <div className="title-row">
+              <p className="section-label" style={{ margin: 0 }}>
+                Comercio
+              </p>
+              {canEdit && storeLocked && (
+                <button
+                  type="button"
+                  className="btn-edit-title"
+                  style={{ marginLeft: "auto" }}
+                  onClick={() => setStoreLocked(false)}
+                >
+                  <IconPencil size={18} color="#4A6741" />
+                </button>
+              )}
+            </div>
             <div className="cat-tabs-scroll">
               {stores.map((store) => (
                 <button
                   key={store.id}
-                  className={`store-chip ${selectedStore?.id === store.id ? "store-chip--selected" : ""}`}
+                  className={`store-chip ${selectedStore === store.name ? "store-chip--selected" : ""} ${storeLocked ? "store-chip--locked" : ""}`}
                   onClick={() => handleStoreSelect(store)}
+                  disabled={storeLocked}
                 >
                   {store.name}
                 </button>
