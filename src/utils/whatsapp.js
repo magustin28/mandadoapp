@@ -1,12 +1,4 @@
-const CATEGORY_LABELS = {
-  supermercado: "Supermercado",
-  verduleria: "Verdulería",
-  otros: "Otros",
-};
-
 export function buildWhatsAppMessage(list) {
-  const categoryLabel = CATEGORY_LABELS[list.category] || list.category;
-
   const itemLines = list.items
     .map((item) => {
       let line = `• ${item.name}`;
