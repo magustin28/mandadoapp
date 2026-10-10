@@ -639,3 +639,9 @@
 .btn-edit-title:hover {
   background: var(--color-crema);
 }
+
+.btn-save:disabled,
+.btn-wap:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

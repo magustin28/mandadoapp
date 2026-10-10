@@ -47,6 +47,7 @@ function ListForm() {
   const [showPreloaded, setShowPreloaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Al editar una lista existente, el título arranca bloqueado (hay que
   // clickear el lápiz para tocarlo) — así cambiar de categoría o comercio
@@ -222,39 +223,59 @@ function ListForm() {
 
   async function handleSave() {
     if (!validate()) return;
-    if (isEditing) {
-      await editList(id, { name, category, items, store: selectedStore });
-      success("Lista guardada");
-      setTimeout(() => navigate(`/categorias?cat=${category}`), 1000);
-    } else {
-      const newList = await addList({ name, category, items, store: selectedStore });
-      if (pendingCollabs.length > 0) {
-        await addCollaborators(
-          newList.id,
-          pendingCollabs.map((c) => c.id),
-        );
+    if (saving) return;
+
+    setSaving(true);
+    try {
+      if (isEditing) {
+        await editList(id, { name, category, items, store: selectedStore });
+        success("Lista guardada");
+        setTimeout(() => navigate(`/categorias?cat=${category}`), 1000);
+      } else {
+        const newList = await addList({ name, category, items, store: selectedStore });
+        if (pendingCollabs.length > 0) {
+          await addCollaborators(
+            newList.id,
+            pendingCollabs.map((c) => c.id),
+          );
+        }
+        success("Lista creada");
+        setTimeout(() => navigate("/"), 1000);
       }
-      success("Lista creada");
-      setTimeout(() => navigate("/"), 1000);
+    } catch (err) {
+      console.error("Error guardando la lista:", err);
+      error("No se pudo guardar la lista. Intentá de nuevo.");
+    } finally {
+      setSaving(false);
     }
   }
 
   async function handleWhatsApp() {
     if (!validate()) return;
-    if (isEditing) {
-      await editList(id, { name, category, items, store: selectedStore });
-      sendWhatsApp({ name, category, items });
-      setTimeout(() => navigate(`/categorias?cat=${category}`), 500);
-    } else {
-      const newList = await addList({ name, category, items, store: selectedStore });
-      if (pendingCollabs.length > 0) {
-        await addCollaborators(
-          newList.id,
-          pendingCollabs.map((c) => c.id),
-        );
+    if (saving) return;
+
+    setSaving(true);
+    try {
+      if (isEditing) {
+        await editList(id, { name, category, items, store: selectedStore });
+        sendWhatsApp({ name, category, items });
+        setTimeout(() => navigate(`/categorias?cat=${category}`), 500);
+      } else {
+        const newList = await addList({ name, category, items, store: selectedStore });
+        if (pendingCollabs.length > 0) {
+          await addCollaborators(
+            newList.id,
+            pendingCollabs.map((c) => c.id),
+          );
+        }
+        sendWhatsApp(newList);
+        setTimeout(() => navigate("/"), 500);
       }
-      sendWhatsApp(newList);
-      setTimeout(() => navigate("/"), 500);
+    } catch (err) {
+      console.error("Error guardando la lista para WhatsApp:", err);
+      error("No se pudo guardar la lista. Intentá de nuevo.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -596,11 +617,11 @@ function ListForm() {
 
       <div className="bottom-actions">
         <div className="bottom-actions-row">
-          <button className="btn-save" onClick={handleSave}>
+          <button className="btn-save" onClick={handleSave} disabled={saving}>
             <IconDeviceFloppy size={18} color="#fff" />
-            {isEditing ? "Guardar" : "Guardar"}
+            {saving ? "Guardando..." : "Guardar"}
           </button>
-          <button className="btn-wap" onClick={handleWhatsApp}>
+          <button className="btn-wap" onClick={handleWhatsApp} disabled={saving}>
             <IconBrandWhatsapp size={18} color="#128C4F" />
             <span>WhatsApp</span>
           </button>

@@ -84,6 +84,8 @@ export async function saveList(list) {
     }));
     const { error: itemsError } = await supabase.from("list_items").insert(rows);
     if (itemsError) throw itemsError;
+
+    await savePriceHistory(list.items);
   }
 
   return getListById(newList.id);
@@ -135,13 +137,14 @@ export async function updateList(id, data) {
   if (Object.keys(listFields).length > 0) {
     const { error } = await supabase
       .from("lists")
-      .update({ ...listFields, updated_at: new Date().toISOString() })
+      .update(listFields)
       .eq("id", id);
     if (error) throw error;
   }
 
   if (items) {
     await syncListItems(id, items);
+    await savePriceHistory(items);
   }
 
   return getListById(id);
@@ -160,31 +163,6 @@ export async function copyList(id) {
     store: original.store,
     items: original.items.map((item) => ({ ...item, id: undefined, ver: false })),
   });
-}
-
-export async function isOwner(listId) {
-  const userId = await getUserId();
-  const { data, error } = await supabase.from("lists").select("owner_id").eq("id", listId).single();
-  if (error) return false;
-  return data.owner_id === userId;
-}
-
-export async function isCollaborator(listId) {
-  const userId = await getUserId();
-  const { data, error } = await supabase
-    .from("collaborators")
-    .select("id")
-    .eq("list_id", listId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) return false;
-  return Boolean(data);
-}
-
-export async function isSharedList(listId) {
-  const { data, error } = await supabase.from("collaborators").select("id").eq("list_id", listId);
-  if (error) return false;
-  return data.length > 0;
 }
 
 // ---------- Items precargables ----------
@@ -318,20 +296,6 @@ export async function getPriceHistory() {
     .select("*")
     .eq("user_id", userId)
     .order("date", { ascending: false });
-  if (error) throw error;
-  return data;
-}
-
-export async function getPriceByName(name) {
-  const userId = await getUserId();
-  const { data, error } = await supabase
-    .from("price_history")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("item_name", name)
-    .order("date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
   if (error) throw error;
   return data;
 }

@@ -38,8 +38,8 @@ function Perfil() {
       error("Las contraseñas no coinciden");
       return;
     }
-    if (password && password.length < 4) {
-      error("La contraseña debe tener al menos 4 caracteres");
+    if (password && password.length < 6) {
+      error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 

@@ -17,7 +17,7 @@ async function fetchProfile(userId) {
     .from("profiles")
     .select("id, name, email")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching profile:", error);
@@ -58,6 +58,9 @@ export function AuthProvider({ children }) {
     }
 
     const profile = await fetchProfile(data.user.id);
+    if (!profile) {
+      return { user: null, error: "No pudimos cargar tu perfil. Cerrá sesión y volvé a intentar." };
+    }
     setUser(profile);
     return { user: profile, error: null };
   }
@@ -99,6 +102,9 @@ export function AuthProvider({ children }) {
     }
 
     const profile = await fetchProfile(data.user.id);
+    if (!profile) {
+      return { user: null, error: "Creamos tu cuenta pero no pudimos cargar tu perfil. Probá iniciar sesión." };
+    }
     setUser(profile);
     return { user: profile, error: null };
   }
@@ -115,20 +121,34 @@ export function AuthProvider({ children }) {
     if (email && email !== user?.email) authUpdates.email = email;
     if (password) authUpdates.password = password;
 
+    // Con las confirmaciones de email desactivadas, el cambio se aplica al
+    // instante (no llega ningún mail). Supabase expone el email pendiente en
+    // user.new_email solo cuando sí hace falta confirmarlo, así el mensaje
+    // que ve el usuario refleja lo que realmente pasó.
+    let emailChangePending = false;
     if (Object.keys(authUpdates).length > 0) {
-      const { error: authError } = await supabase.auth.updateUser(authUpdates);
+      const { data: authData, error: authError } = await supabase.auth.updateUser(authUpdates);
       if (authError) {
         return { error: authError.message };
+      }
+      if (authUpdates.email) {
+        emailChangePending = Boolean(authData?.user?.new_email);
+      }
+    }
+
+    // Si el email se cambió al instante, sincronizamos profiles.email para
+    // que la app (perfil, búsqueda de colaboradores) no muestre el viejo.
+    if (authUpdates.email && !emailChangePending) {
+      const { error: emailSyncError } = await supabase.from("profiles").update({ email }).eq("id", user.id);
+      if (emailSyncError) {
+        return { error: emailSyncError.message };
       }
     }
 
     const profile = await fetchProfile(user.id);
-    setUser(profile);
+    if (profile) setUser(profile);
 
-    return {
-      error: null,
-      emailChangePending: Boolean(authUpdates.email),
-    };
+    return { error: null, emailChangePending };
   }
 
   function getInitials() {
