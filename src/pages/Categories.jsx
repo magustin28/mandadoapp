@@ -1,18 +1,15 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Footer from "../components/layout/Footer";
 import { useLists } from "../hooks/useLists";
-import { IconPencil, IconTrash, IconCopy, IconBuildingStore, IconLeaf, IconBasket, IconUsers, IconPlus } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconCopy, IconUsers, IconPlus } from "@tabler/icons-react";
+import { CATEGORIAS } from "../utils/categories";
 import "./Categories.css";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import { formatFecha } from "../utils/date";
 
-const CATEGORIES = [
-  { key: "supermercado", label: "Supermercado", icon: <IconBuildingStore size={18} /> },
-  { key: "verduleria", label: "Verdulería", icon: <IconLeaf size={18} /> },
-  { key: "otros", label: "Otros", icon: <IconBasket size={18} /> },
-];
 
 function Categories() {
   const navigate = useNavigate();
@@ -43,9 +40,11 @@ function Categories() {
         <h1 className="home-title">Categorías</h1>
       </div>
       <div className="cat-tabs">
-        {CATEGORIES.map(({ key, label, icon }) => (
+        {CATEGORIAS.map(({ key, label, Icon }) => (
           <button key={key} className={`cat-tab ${activeCat === key ? "cat-tab--active" : ""}`} onClick={() => setSearchParams({ cat: key })}>
-            <span>{icon}</span>
+            <span>
+              <Icon size={18} />
+            </span>
             <span>{label}</span>
           </button>
         ))}
@@ -55,7 +54,7 @@ function Categories() {
         {filteredLists.length === 0 ? (
           <div className="empty-state">
             <p>No hay listas en esta categoría.</p>
-            <button className="btn-go-new" onClick={() => navigate("/nueva")}>
+            <button className="btn-go-new" onClick={() => navigate(`/nueva?cat=${activeCat}`)}>
               Crear lista nueva
             </button>
           </div>
@@ -72,7 +71,7 @@ function Categories() {
                     )}
                   </p>
                   <p className="list-meta">
-                    {list.items?.length || 0} items · {new Date(list.createdAt).toLocaleDateString("es-AR")}
+                    {list.items?.length || 0} items · {formatFecha(list.updatedAt || list.createdAt)}
                   </p>
                 </div>{" "}
                 <div className="cat-list-actions">
@@ -93,7 +92,7 @@ function Categories() {
       </div>
 
       {filteredLists.length > 0 && (
-        <button className="btn-fab" onClick={() => navigate("/nueva")}>
+        <button className="btn-fab" onClick={() => navigate(`/nueva?cat=${activeCat}`)}>
           <IconPlus size={22} color="#fff" />
         </button>
       )}

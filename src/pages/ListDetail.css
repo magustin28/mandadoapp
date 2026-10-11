@@ -44,16 +44,33 @@
   border-bottom: none;
 }
 
+.detail-item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-item-name {
   font-size: var(--font-size-md);
   color: var(--color-texto-principal);
-  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .detail-item-right {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.detail-item-qty {
+  font-size: var(--font-size-sm);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .detail-item-price {

@@ -141,7 +141,7 @@
 }
 
 .item-input-qty {
-  width: 48px;
+  width: 64px;
   border: 1px solid var(--color-crema-borde);
   border-radius: 8px;
   padding: 4px 8px;
@@ -153,7 +153,7 @@
 }
 
 .item-input-unit {
-  width: 44px;
+  width: 72px;
   border: 1px solid var(--color-crema-borde);
   border-radius: 8px;
   padding: 4px 6px;
@@ -203,7 +203,7 @@
 
 .bottom-actions {
   position: fixed;
-  bottom: 90px;
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   max-width: 430px;
@@ -275,14 +275,9 @@
 
 .cat-tabs-scroll {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-sm);
-  overflow-x: auto;
-  scrollbar-width: none;
   padding-bottom: var(--space-xs);
-}
-
-.cat-tabs-scroll::-webkit-scrollbar {
-  display: none;
 }
 
 .cat-opt-tab {
@@ -527,15 +522,12 @@
   flex-shrink: 0;
 }
 
-.panel-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-}
-
 .preloaded-list {
   position: relative;
   z-index: 11;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
   padding: 5px 0 10px;
 }
 
@@ -649,4 +641,15 @@
 .store-chip--locked {
   opacity: 0.6;
   cursor: default;
+}
+
+.store-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.store-row-scroll {
+  flex: 1;
+  min-width: 0;
 }

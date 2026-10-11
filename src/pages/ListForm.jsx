@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   IconChevronLeft,
   IconDeviceFloppy,
   IconBrandWhatsapp,
   IconTrash,
   IconPlus,
-  IconBuildingStore,
-  IconLeaf,
-  IconBasket,
   IconUsers,
   IconUserPlus,
   IconX,
@@ -18,6 +15,10 @@ import Footer from "../components/layout/Footer";
 import { useLists, usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
 import { sendWhatsApp } from "../utils/whatsapp";
+import { CANTIDADES, UNIDADES, formatCantidad, normalizarUnidad } from "../utils/items";
+import { CATEGORIAS, CATEGORY_LABELS } from "../utils/categories";
+import { goBack } from "../utils/navigation";
+import { useBackClose } from "../hooks/useBackClose";
 import { getProfileByEmail, searchProfiles, addCollaborators } from "../services/storage";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
@@ -25,24 +26,22 @@ import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import "./ListForm.css";
 
-const CATEGORIES = [
-  { key: "supermercado", label: "Supermercado", icon: (selected) => <IconBuildingStore size={20} color={selected ? "#fff" : "#4A6741"} /> },
-  { key: "verduleria", label: "Verdulería", icon: (selected) => <IconLeaf size={20} color={selected ? "#fff" : "#3B7A47"} /> },
-  { key: "otros", label: "Otros", icon: (selected) => <IconBasket size={20} color={selected ? "#fff" : "#B87333"} /> },
-];
 
 const CATEGORIES_WITH_STORES = ["supermercado"];
 
 function ListForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const catParam = searchParams.get("cat");
+  const initialCategory = CATEGORIAS.some((c) => c.key === catParam) ? catParam : "supermercado";
   const isEditing = Boolean(id);
 
   const { user } = useAuth();
-  const { getById, fetchById, addList, editList, removeList } = useLists();
+  const { lists, getById, fetchById, addList, editList, removeList } = useLists();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("supermercado");
+  const [category, setCategory] = useState(initialCategory);
   const [items, setItems] = useState([]);
   const [showPreloaded, setShowPreloaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -69,6 +68,29 @@ function ListForm() {
 
   const [showCollabPanel, setShowCollabPanel] = useState(false);
 
+  // El gesto "atrás" del celular cierra los paneles abiertos.
+  useBackClose(showPreloaded, () => setShowPreloaded(false));
+  useBackClose(showCollabPanel, () => setShowCollabPanel(false));
+
+  // Cerrar los paneles al hacer clic fuera (sin overlay, para no tapar botones).
+  const preloadedRef = useRef(null);
+  const preloadedBtnRef = useRef(null);
+  const collabRef = useRef(null);
+  const collabBtnRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (showPreloaded && preloadedRef.current && !preloadedRef.current.contains(e.target) && !preloadedBtnRef.current?.contains(e.target)) {
+        setShowPreloaded(false);
+      }
+      if (showCollabPanel && collabRef.current && !collabRef.current.contains(e.target) && !collabBtnRef.current?.contains(e.target)) {
+        setShowCollabPanel(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPreloaded, showCollabPanel]);
+
   const { collaborators, add, remove } = useCollaborators(id);
 
   const owner = id && ownerId ? ownerId === user?.id : false;
@@ -81,23 +103,29 @@ function ListForm() {
 
   const [userSuggestions, setUserSuggestions] = useState([]);
 
+  // Devuelve el nombre con sufijo (2), (3)... si ya existe otro igual.
+  // excludeId permite ignorar la lista que se está editando.
+  function uniqueName(baseName, excludeId = null) {
+    const existentes = lists.filter((l) => l.id !== excludeId).map((l) => l.name);
+    if (!existentes.includes(baseName)) return baseName;
+    let n = 2;
+    while (existentes.includes(`${baseName} (${n})`)) n++;
+    return `${baseName} (${n})`;
+  }
+
   function getDefaultName(cat, storeName) {
     const fecha = new Date().toLocaleDateString("es-AR", {
       day: "2-digit",
       month: "2-digit",
     });
-    const catLabel = {
-      supermercado: "Supermercado",
-      verduleria: "Verdulería",
-      otros: "Otros",
-    }[cat];
-    if (storeName) return `${catLabel} ${storeName} - ${fecha}`;
-    return `${catLabel} - ${fecha}`;
+    const catLabel = CATEGORY_LABELS[cat];
+    const base = storeName ? `${catLabel} ${storeName} - ${fecha}` : `${catLabel} - ${fecha}`;
+    return uniqueName(base);
   }
 
   useEffect(() => {
     if (!isEditing) {
-      setName(getDefaultName("supermercado", null));
+      setName(getDefaultName(initialCategory, null));
       setLoaded(true);
       return;
     }
@@ -201,7 +229,7 @@ function ListForm() {
           id: crypto.randomUUID(),
           name: preloadedItem.name,
           quantity: null,
-          unit: preloadedItem.unit || "",
+          unit: normalizarUnidad(preloadedItem.unit) || "",
           price: history?.price || null,
           ver: !history?.price,
           expanded: false,
@@ -226,14 +254,16 @@ function ListForm() {
     if (!validate()) return;
     if (saving) return;
 
+    const finalName = uniqueName(name.trim(), isEditing ? id : null);
+
     setSaving(true);
     try {
       if (isEditing) {
-        await editList(id, { name, category, items, store: selectedStore });
+        await editList(id, { name: finalName, category, items, store: selectedStore });
         success("Lista guardada");
         setTimeout(() => navigate(`/categorias?cat=${category}`), 1000);
       } else {
-        const newList = await addList({ name, category, items, store: selectedStore });
+        const newList = await addList({ name: finalName, category, items, store: selectedStore });
         if (pendingCollabs.length > 0) {
           await addCollaborators(
             newList.id,
@@ -255,14 +285,16 @@ function ListForm() {
     if (!validate()) return;
     if (saving) return;
 
+    const finalName = uniqueName(name.trim(), isEditing ? id : null);
+
     setSaving(true);
     try {
       if (isEditing) {
-        await editList(id, { name, category, items, store: selectedStore });
-        sendWhatsApp({ name, category, items });
+        await editList(id, { name: finalName, category, items, store: selectedStore });
+        sendWhatsApp({ name: finalName, category, items });
         setTimeout(() => navigate(`/categorias?cat=${category}`), 500);
       } else {
-        const newList = await addList({ name, category, items, store: selectedStore });
+        const newList = await addList({ name: finalName, category, items, store: selectedStore });
         if (pendingCollabs.length > 0) {
           await addCollaborators(
             newList.id,
@@ -403,7 +435,7 @@ function ListForm() {
   return (
     <div className="page">
       <div className="nav-bar">
-        <button className="nav-back" onClick={() => navigate(-1)}>
+        <button className="nav-back" onClick={() => goBack(navigate)}>
           <IconChevronLeft size={20} />
         </button>
         <div>
@@ -436,41 +468,36 @@ function ListForm() {
         </div>
         <p className="section-label">Categoría</p>
         <div className="cat-tabs-scroll">
-          {CATEGORIES.map(({ key, label, icon }) => (
+          {CATEGORIAS.map(({ key, label, color, Icon }) => (
             <button key={key} className={`cat-opt-tab ${category === key ? "cat-opt-tab--selected" : ""}`} onClick={() => handleCategoryChange(key)}>
-              <span>{icon(category === key)}</span>
+              <span>
+                <Icon size={20} color={category === key ? "#fff" : color} />
+              </span>
               <span>{label}</span>
             </button>
           ))}
         </div>
         {CATEGORIES_WITH_STORES.includes(category) && (
           <>
-            <div className="title-row">
-              <p className="section-label" style={{ margin: 0 }}>
-                Comercio
-              </p>
+            <p className="section-label">Comercio</p>
+            <div className="store-row">
+              <div className="cat-tabs-scroll store-row-scroll">
+                {stores.map((store) => (
+                  <button
+                    key={store.id}
+                    className={`store-chip ${selectedStore === store.name ? "store-chip--selected" : ""} ${storeLocked ? "store-chip--locked" : ""}`}
+                    onClick={() => handleStoreSelect(store)}
+                    disabled={storeLocked}
+                  >
+                    {store.name}
+                  </button>
+                ))}
+              </div>
               {canEdit && storeLocked && (
-                <button
-                  type="button"
-                  className="btn-edit-title"
-                  style={{ marginLeft: "auto" }}
-                  onClick={() => setStoreLocked(false)}
-                >
+                <button type="button" className="btn-edit-title" onClick={() => setStoreLocked(false)}>
                   <IconPencil size={18} color="#4A6741" />
                 </button>
               )}
-            </div>
-            <div className="cat-tabs-scroll">
-              {stores.map((store) => (
-                <button
-                  key={store.id}
-                  className={`store-chip ${selectedStore === store.name ? "store-chip--selected" : ""} ${storeLocked ? "store-chip--locked" : ""}`}
-                  onClick={() => handleStoreSelect(store)}
-                  disabled={storeLocked}
-                >
-                  {store.name}
-                </button>
-              ))}
             </div>
           </>
         )}
@@ -478,14 +505,13 @@ function ListForm() {
           <p className="section-label" style={{ margin: 0 }}>
             Items
           </p>
-          <button className="btn-preloaded" onClick={() => setShowPreloaded(!showPreloaded)}>
+          <button ref={preloadedBtnRef} className="btn-preloaded" onClick={() => { setShowPreloaded((v) => !v); setShowCollabPanel(false); }}>
             {showPreloaded ? "Ocultar sugerencias" : "⭐ Ver sugerencias"}
           </button>
         </div>
         {showPreloaded && (
           <>
-            <div className="panel-overlay" onClick={() => setShowPreloaded(false)} />
-            <div className="preloaded-list">
+            <div ref={preloadedRef} className="preloaded-list">
               {preloaded.map((p) => {
                 // El resaltado de "ya elegido" solo tiene sentido mientras
                 // armás una lista nueva. Al editar una existente confunde
@@ -508,6 +534,7 @@ function ListForm() {
         <div className="items-container">
           {items.map((item) => {
             const priceInfo = getPriceByName(item.name);
+            const unidadActual = normalizarUnidad(item.unit) || "";
             return (
               <div key={item.id} className="item-row-wrap">
                 <div className="item-row">
@@ -536,24 +563,37 @@ function ListForm() {
                   <div className="item-row-extra">
                     <div className="item-extra-field">
                       <span className="item-extra-label">Cant.</span>
-                      <input
+                      <select
                         className="item-input-qty"
-                        type="number"
-                        min="1"
-                        placeholder="—"
-                        value={item.quantity || ""}
-                        onChange={(e) => handleItemChange(item.id, "quantity", Number(e.target.value) || null)}
-                      />
+                        value={item.quantity ?? ""}
+                        onChange={(e) => handleItemChange(item.id, "quantity", e.target.value === "" ? null : Number(e.target.value))}
+                      >
+                        <option value="">—</option>
+                        {item.quantity != null && !CANTIDADES.some((c) => c.value === Number(item.quantity)) && (
+                          <option value={item.quantity}>{formatCantidad(item.quantity)}</option>
+                        )}
+                        {CANTIDADES.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="item-extra-field">
                       <span className="item-extra-label">Unidad</span>
-                      <input
+                      <select
                         className="item-input-unit"
-                        type="text"
-                        placeholder="kg, u..."
-                        value={item.unit || ""}
+                        value={unidadActual}
                         onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
-                      />
+                      >
+                        <option value="">—</option>
+                        {unidadActual && !UNIDADES.includes(unidadActual) && <option value={unidadActual}>{unidadActual}</option>}
+                        {UNIDADES.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="item-extra-field">
                       <span className="item-extra-label">Precio</span>
@@ -591,7 +631,7 @@ function ListForm() {
               <p className="section-label" style={{ margin: 0 }}>
                 Colaboradores
               </p>
-              <button className="btn-preloaded" onClick={() => setShowCollabPanel(!showCollabPanel)}>
+              <button ref={collabBtnRef} className="btn-preloaded" onClick={() => { setShowCollabPanel((v) => !v); setShowPreloaded(false); }}>
                 <IconUsers size={14} /> Invitar
               </button>
             </div>
@@ -619,8 +659,7 @@ function ListForm() {
 
             {showCollabPanel && (
               <>
-                <div className="panel-overlay" onClick={() => setShowCollabPanel(false)} />
-                <div className="collab-panel">
+                <div ref={collabRef} className="collab-panel">
                   <div className="collab-add">
                     <div className="collab-input-wrap">
                       <input

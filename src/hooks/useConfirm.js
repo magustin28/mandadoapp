@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useBackClose } from "./useBackClose";
 
 export function useConfirm() {
   const [confirm, setConfirm] = useState(null);
@@ -18,6 +19,9 @@ export function useConfirm() {
     confirm?.resolve(false);
     setConfirm(null);
   }
+
+  // El gesto "atrás" del celular cierra (cancela) el modal.
+  useBackClose(Boolean(confirm), handleCancel);
 
   return { confirm, ask, handleConfirm, handleCancel };
 }

@@ -1,15 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { IconPlus, IconBuildingStore, IconLeaf, IconBasket, IconChevronRight, IconUsers } from "@tabler/icons-react";
+import { IconPlus, IconChevronRight, IconUsers } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import { useLists } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
+import { CATEGORIAS, getCategoria } from "../utils/categories";
 import "./Home.css";
-
-const CATEGORIES = {
-  supermercado: { label: "Supermercado", icon: <IconBuildingStore size={22} color="#4A6741" /> },
-  verduleria: { label: "Verdulería", icon: <IconLeaf size={22} color="#3B7A47" /> },
-  otros: { label: "Otros", icon: <IconBasket size={22} color="#B87333" /> },
-};
 
 function Home() {
   const navigate = useNavigate();
@@ -47,11 +42,15 @@ function Home() {
 
         <p className="section-label">Categorías</p>
         <div className="categories-grid">
-          {Object.entries(CATEGORIES).map(([key, { label, icon }]) => (
+          {CATEGORIAS.map(({ key, label, color, Icon }) => (
             <button key={key} className="cat-card" onClick={() => navigate(`/categorias?cat=${key}`)}>
-              <span className="cat-icon">{icon}</span>
-              <span className="cat-name">{label}</span>
-              <span className="cat-count">{getByCategory(key).length} listas</span>
+              <span className="cat-icon" style={{ background: color }}>
+                <Icon size={20} color="#fff" />
+              </span>
+              <span className="cat-info">
+                <span className="cat-name">{label}</span>
+                <span className="cat-count">{getByCategory(key).length} listas</span>
+              </span>
             </button>
           ))}
         </div>
@@ -62,14 +61,14 @@ function Home() {
             <div className="recent-lists">
               {recientes.map((list) => (
                 <button key={list.id} className="list-item" onClick={() => navigate(`/lista/${list.id}`)}>
-                  <span className={`list-dot dot-${list.category}`}></span>
+                  <span className="list-dot" style={{ background: getCategoria(list.category)?.color }}></span>
                   <div className="list-info">
                     <p className="list-name">
                       {list.name}
                       {list.isShared && <IconUsers size={13} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle" }} />}
                     </p>
                     <p className="list-meta">
-                      {CATEGORIES[list.category]?.label} · {list.items?.length || 0} items
+                      {getCategoria(list.category)?.label} · {list.items?.length || 0} items
                     </p>
                   </div>
                   <IconChevronRight size={18} color="#C4BCB0" />

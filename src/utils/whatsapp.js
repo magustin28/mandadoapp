@@ -1,8 +1,11 @@
+import { formatearCantidadUnidad } from "./items";
+
 export function buildWhatsAppMessage(list) {
   const itemLines = list.items
     .map((item) => {
+      const cantidad = formatearCantidadUnidad(item);
       let line = `• ${item.name}`;
-      if (item.quantity) line += ` — ${item.quantity}${item.unit ? " " + item.unit : ""}`;
+      if (cantidad) line += ` — ${cantidad}`;
       if (item.price) line += ` — $${Number(item.price).toLocaleString("es-AR")}`;
       if (item.ver) line += ` — VER`;
       return line;

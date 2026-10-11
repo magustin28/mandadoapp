@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IconUser, IconMail, IconLock, IconLogout, IconChevronLeft } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
+import { goBack } from "../utils/navigation";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
@@ -73,7 +74,7 @@ function Perfil() {
   return (
     <div className="page">
       <div className="nav-bar">
-        <button className="nav-back" onClick={() => navigate(-1)}>
+        <button className="nav-back" onClick={() => goBack(navigate)}>
           <IconChevronLeft size={20} />
         </button>
         <span className="nav-title">Mi perfil</span>

@@ -1,9 +1,15 @@
 @import "./tokens.css";
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -11,14 +17,26 @@ body {
   background: var(--color-crema);
   color: var(--color-texto-principal);
   min-height: 100vh;
+  min-height: 100dvh;
   max-width: 430px;
   margin: 0 auto;
+  padding-top: env(safe-area-inset-top, 0px);
+  overscroll-behavior-y: contain;
 }
 
 input,
 button,
-textarea {
+textarea,
+select {
   font-family: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 button {

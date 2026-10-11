@@ -225,9 +225,12 @@ export async function deleteStore(category, id) {
 // ---------- Colaboradores ----------
 
 export async function getProfileByEmail(email) {
-  const { data, error } = await supabase.from("profiles").select("id, name, email").eq("email", email).maybeSingle();
+  // Va por RPC (SECURITY DEFINER): la lectura directa de profiles ahora solo
+  // permite ver el propio perfil y el de con quienes compartís lista, así que
+  // para invitar a alguien nuevo (por email exacto) se usa esta función.
+  const { data, error } = await supabase.rpc("find_profile_by_email", { check_email: email });
   if (error) throw error;
-  return data;
+  return data?.[0] ?? null;
 }
 
 export async function searchProfiles(query) {
@@ -309,13 +312,41 @@ export async function getPriceHistory() {
 
 export async function savePriceHistory(items) {
   const userId = await getUserId();
-  const rows = items
-    .filter((item) => item.price)
+
+  // Un registro por producto (si hubiera nombres repetidos, gana el último).
+  const porNombre = new Map();
+  for (const item of items) {
+    if (item.price) porNombre.set(item.name, item);
+  }
+  if (!porNombre.size) return;
+
+  const nombres = [...porNombre.keys()];
+
+  // Último precio registrado por producto (para no insertar repetidos).
+  const { data: previos, error: fetchError } = await supabase
+    .from("price_history")
+    .select("item_name, price, date")
+    .eq("user_id", userId)
+    .in("item_name", nombres);
+  if (fetchError) throw fetchError;
+
+  const ultimoPorNombre = new Map();
+  for (const row of previos) {
+    const actual = ultimoPorNombre.get(row.item_name);
+    if (!actual || new Date(row.date) > new Date(actual.date)) ultimoPorNombre.set(row.item_name, row);
+  }
+
+  const rows = [...porNombre.values()]
+    .filter((item) => {
+      const previo = ultimoPorNombre.get(item.name);
+      return !previo || Number(previo.price) !== Number(item.price);
+    })
     .map((item) => ({
       item_name: item.name,
       price: item.price,
       user_id: userId,
     }));
+
   if (!rows.length) return;
   const { error } = await supabase.from("price_history").insert(rows);
   if (error) throw error;

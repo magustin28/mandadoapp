@@ -4,14 +4,9 @@
 
 .cat-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-xl);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.cat-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .cat-tab {
