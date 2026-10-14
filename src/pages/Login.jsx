@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import "./Auth.css";
 
 function Login() {
   const navigate = useNavigate();
-  const { login, loginWithGoogle } = useAuth();
+  const { user, login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Si ya hay sesión, no mostramos el login.
+  if (user) return <Navigate to="/" replace />;
 
   async function handleLogin() {
     if (!email.trim() || !password.trim()) {
@@ -25,7 +28,7 @@ function Login() {
       setError(result.error);
       return;
     }
-    navigate("/");
+    navigate("/", { replace: true });
   }
 
   async function handleGoogleLogin() {

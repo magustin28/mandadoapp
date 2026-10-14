@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import "./Auth.css";
 
 function Registro() {
   const navigate = useNavigate();
-  const { register, loginWithGoogle } = useAuth();
+  const { user, register, loginWithGoogle } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -14,6 +14,9 @@ function Registro() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Si ya hay sesión, no mostramos el registro.
+  if (user) return <Navigate to="/" replace />;
 
   async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -43,7 +46,7 @@ function Registro() {
       return;
     }
 
-    navigate("/");
+    navigate("/", { replace: true });
   }
 
   async function handleGoogleRegister() {

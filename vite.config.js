@@ -13,6 +13,7 @@ export default defineConfig({
         name: "MandadoApp",
         short_name: "Mandado",
         description: "Tu lista de compras familiar",
+        lang: "es",
         theme_color: "#4A6741",
         background_color: "#F5F2EC",
         display: "standalone",
