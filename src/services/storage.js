@@ -96,10 +96,7 @@ export async function saveList(list) {
 // IMPORTANTE: espera el array COMPLETO de items de la lista (no un diff parcial),
 // igual que antes se guardaba el array entero en localStorage.
 async function syncListItems(listId, items) {
-  const { data: currentItems, error: fetchError } = await supabase
-    .from("list_items")
-    .select("id")
-    .eq("list_id", listId);
+  const { data: currentItems, error: fetchError } = await supabase.from("list_items").select("id").eq("list_id", listId);
   if (fetchError) throw fetchError;
 
   const currentIds = currentItems.map((i) => i.id);
@@ -140,10 +137,7 @@ export async function updateList(id, data) {
   }
 
   if (Object.keys(listFields).length > 0) {
-    const { error } = await supabase
-      .from("lists")
-      .update(listFields)
-      .eq("id", id);
+    const { error } = await supabase.from("lists").update(listFields).eq("id", id);
     if (error) throw error;
   }
 
@@ -261,20 +255,13 @@ export async function getProfileByEmail(email) {
 }
 
 export async function searchProfiles(query) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, name, email")
-    .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-    .limit(10);
+  const { data, error } = await supabase.from("profiles").select("id, name, email").or(`name.ilike.%${query}%,email.ilike.%${query}%`).limit(10);
   if (error) throw error;
   return data;
 }
 
 export async function getCollaboratorsByList(listId) {
-  const { data, error } = await supabase
-    .from("collaborators")
-    .select("id, user_id, role, created_at, profiles(name, email)")
-    .eq("list_id", listId);
+  const { data, error } = await supabase.from("collaborators").select("id, user_id, role, created_at, profiles(name, email)").eq("list_id", listId);
   if (error) throw error;
   return data.map((c) => ({
     id: c.id,
@@ -294,11 +281,7 @@ export async function addCollaborator(listId, email) {
     return { collaborator: null, error: "No encontramos un usuario registrado con ese email" };
   }
 
-  const { data, error } = await supabase
-    .from("collaborators")
-    .insert({ list_id: listId, user_id: profile.id, role: "editor" })
-    .select()
-    .single();
+  const { data, error } = await supabase.from("collaborators").insert({ list_id: listId, user_id: profile.id, role: "editor" }).select().single();
 
   if (error) {
     if (error.code === "23505") {

@@ -225,11 +225,7 @@ export function useCollaborators(listId) {
 
     const channel = supabase
       .channel(`collaborators-${listId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "collaborators", filter: `list_id=eq.${listId}` },
-        refresh,
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "collaborators", filter: `list_id=eq.${listId}` }, refresh)
       .subscribe();
 
     return () => supabase.removeChannel(channel);

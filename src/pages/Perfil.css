@@ -18,13 +18,13 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #C8B89A;
+  background: #c8b89a;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   font-weight: 600;
-  color: #5C4A35;
+  color: #5c4a35;
 }
 
 .perfil-name {
@@ -51,7 +51,7 @@
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
-  border-bottom: 0.5px solid #EEE9E2;
+  border-bottom: 0.5px solid #eee9e2;
 }
 
 .perfil-field:last-child {
@@ -70,7 +70,7 @@
 
 .perfil-success {
   background: var(--color-verde-claro);
-  border: 1px solid #B5C9B1;
+  border: 1px solid #b5c9b1;
   border-radius: var(--radius-btn);
   padding: var(--space-md);
   font-size: var(--font-size-sm);
@@ -85,7 +85,7 @@
   padding: var(--space-md);
   font-size: var(--font-size-md);
   font-weight: 500;
-  color: #C0392B;
+  color: #c0392b;
   display: flex;
   align-items: center;
   justify-content: center;

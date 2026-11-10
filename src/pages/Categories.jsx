@@ -10,7 +10,6 @@ import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { formatFecha } from "../utils/date";
 
-
 function Categories() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -66,9 +65,7 @@ function Categories() {
                   {" "}
                   <p className="list-name">
                     {list.name}
-                    {list.isShared && (
-                      <IconUsers size={14} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle", flexShrink: 0 }} />
-                    )}
+                    {list.isShared && <IconUsers size={14} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle", flexShrink: 0 }} />}
                   </p>
                   <p className="list-meta">
                     {list.items?.length || 0} items · {formatFecha(list.updatedAt || list.createdAt)}

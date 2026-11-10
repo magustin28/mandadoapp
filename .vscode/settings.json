@@ -1,0 +1,15 @@
+{
+  // Config del PROYECTO (workspace), no global: sólo aplica cuando se abre ESTA carpeta en VS Code.
+  // A diferencia del settings.json del usuario (%APPDATA%\Code\User\settings.json), que es global y
+  // afecta a todos los proyectos, este archivo viaja con el repo.
+
+  // Formateo: el estilo lo define .prettierrc.json y prettier está como devDependency, así que el
+  // editor usa la MISMA versión que el CLI. Con el estilo fijado, formatear al guardar ya no genera
+  // ruido en los commits: si el estilo sale del settings.json del usuario, un guardado puede
+  // reformatear el archivo entero por un cambio de una sola línea.
+  "editor.formatOnSave": true,
+
+  // LF en todo el proyecto: es lo que guarda el repo y lo que fuerza .gitattributes. Sin esto, git
+  // avisa en cada commit "LF will be replaced by CRLF" y el working tree queda mezclado.
+  "files.eol": "\n"
+}

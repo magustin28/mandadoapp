@@ -49,7 +49,7 @@ export function normalizarUnidad(unit) {
 // "1/4 kg" / "2 lts" / "" si no hay nada.
 export function formatearCantidadUnidad(item) {
   const cant = formatCantidad(item.quantity);
-  if (!cant) return "";   // sin cantidad no mostramos nada (aunque haya unidad)
+  if (!cant) return ""; // sin cantidad no mostramos nada (aunque haya unidad)
   const unidad = normalizarUnidad(item.unit);
   return unidad ? `${cant} ${unidad}` : cant;
 }

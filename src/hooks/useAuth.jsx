@@ -12,11 +12,7 @@ function cleanAuthHash() {
 }
 
 async function fetchProfile(userId) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, name, email")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.from("profiles").select("id, name, email").eq("id", userId).maybeSingle();
 
   if (error) {
     console.error("Error fetching profile:", error);

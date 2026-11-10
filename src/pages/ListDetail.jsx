@@ -15,7 +15,6 @@ import { CATEGORY_LABELS } from "../utils/categories";
 import { goBack } from "../utils/navigation";
 import "./ListDetail.css";
 
-
 function ListDetail() {
   const navigate = useNavigate();
   const { id } = useParams();

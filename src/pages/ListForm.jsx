@@ -26,7 +26,6 @@ import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import "./ListForm.css";
 
-
 const CATEGORIES_WITH_STORES = ["supermercado"];
 
 function ListForm() {
@@ -519,7 +518,14 @@ function ListForm() {
           <p className="section-label" style={{ margin: 0 }}>
             Items
           </p>
-          <button ref={preloadedBtnRef} className="btn-preloaded" onClick={() => { setShowPreloaded((v) => !v); setShowCollabPanel(false); }}>
+          <button
+            ref={preloadedBtnRef}
+            className="btn-preloaded"
+            onClick={() => {
+              setShowPreloaded((v) => !v);
+              setShowCollabPanel(false);
+            }}
+          >
             {showPreloaded ? "Ocultar sugerencias" : "⭐ Ver sugerencias"}
           </button>
         </div>
@@ -559,9 +565,7 @@ function ListForm() {
                     value={item.name}
                     onChange={(e) => handleItemNameChange(item.id, e.target.value)}
                   />
-                  {priceInfo && !item.expanded && (
-                    <span className="item-price-badge">${Number(priceInfo.price).toLocaleString("es-AR")}</span>
-                  )}
+                  {priceInfo && !item.expanded && <span className="item-price-badge">${Number(priceInfo.price).toLocaleString("es-AR")}</span>}
                   <button className={`btn-ver ${item.ver ? "btn-ver--active" : ""}`} onClick={() => handleItemChange(item.id, "ver", !item.ver)}>
                     VER
                   </button>
@@ -595,11 +599,7 @@ function ListForm() {
                     </div>
                     <div className="item-extra-field">
                       <span className="item-extra-label">Unidad</span>
-                      <select
-                        className="item-input-unit"
-                        value={unidadActual}
-                        onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
-                      >
+                      <select className="item-input-unit" value={unidadActual} onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}>
                         <option value="">—</option>
                         {unidadActual && !UNIDADES.includes(unidadActual) && <option value={unidadActual}>{unidadActual}</option>}
                         {UNIDADES.map((u) => (
@@ -645,7 +645,14 @@ function ListForm() {
               <p className="section-label" style={{ margin: 0 }}>
                 Colaboradores
               </p>
-              <button ref={collabBtnRef} className="btn-preloaded" onClick={() => { setShowCollabPanel((v) => !v); setShowPreloaded(false); }}>
+              <button
+                ref={collabBtnRef}
+                className="btn-preloaded"
+                onClick={() => {
+                  setShowCollabPanel((v) => !v);
+                  setShowPreloaded(false);
+                }}
+              >
                 <IconUsers size={14} /> Invitar
               </button>
             </div>

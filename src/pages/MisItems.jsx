@@ -10,7 +10,6 @@ import Toast from "../components/ui/Toast";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import { UNIDADES, normalizarUnidad } from "../utils/items";
 
-
 function MisItems() {
   const [activeCat, setActiveCat] = useState("supermercado");
   const [newName, setNewName] = useState("");

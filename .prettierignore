@@ -1,0 +1,15 @@
+# Qué NO formatea Prettier (misma sintaxis que .gitignore). node_modules y .git ya se ignoran solos.
+
+# Generados
+dist/
+package-lock.json
+
+# Temporales y copias viejas (tampoco se versionan: ver .gitignore)
+tmp/
+verAnterior/
+
+# Documentación local (personal, no se versiona: ver .gitignore). Queda como se escribe a mano.
+docs/
+
+# Nota: Prettier sólo toca las extensiones que conoce, así que .clinerules, .clineignore
+# y .env.local quedan afuera solos.
