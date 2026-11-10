@@ -12,7 +12,7 @@ export function buildWhatsAppMessage(list) {
     })
     .join("\n");
 
-  const message = `*${list.name}*\n${itemLines}\n\n_Enviado desde Mandado_`;
+  const message = `*${list.name}*\n${itemLines}\n\n_Enviado desde Mandado App_`;
 
   return message;
 }

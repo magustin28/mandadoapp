@@ -13,7 +13,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 // Import explícito: en .oxlintrc.json el env es "browser", así que `process` como global daría no-undef.
 import process from "node:process";
 
-// MandadoApp no tiene tests: el chequeo es lint (oxlint) + formato (prettier --check) + build.
+// Mandado App no tiene tests: el chequeo es lint (oxlint) + formato (prettier --check) + build.
 const PASOS = [
   { nombre: "lint", desc: "oxlint" },
   // El nombre es el del script de package.json, y va "format:check" y NO "format": "format" reescribe

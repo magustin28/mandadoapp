@@ -43,7 +43,7 @@ function Login() {
   return (
     <div className="auth-page">
       <div className="auth-header">
-        <h1 className="auth-title">MandadoApp</h1>
+        <h1 className="auth-title">Mandado App</h1>
         <p className="auth-subtitle">Tu lista de compras familiar</p>
       </div>
 

@@ -59,7 +59,7 @@ function Home() {
       <div className="home-header">
         <div>
           <h1 className="home-title">Hola{nombreUsuario ? ", " + nombreUsuario : ""} 👋</h1>
-          <p className="home-subtitle">MandadoApp</p>
+          <p className="home-subtitle">Mandado App</p>
         </div>
         <div className="home-user">
           <button ref={menuBtnRef} className="home-avatar" onClick={() => setMenuAbierto((v) => !v)} aria-label="Cuenta">

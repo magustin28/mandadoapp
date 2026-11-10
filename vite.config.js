@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
-        name: "MandadoApp",
-        short_name: "Mandado",
+        name: "Mandado App",
+        short_name: "Mandado App",
         description: "Tu lista de compras familiar",
         lang: "es",
         theme_color: "#4A6741",
@@ -32,10 +32,10 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "icons/icon-512.png",
+            src: "icons/icon-maskable-512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "maskable",
           },
         ],
       },
