@@ -36,7 +36,7 @@ function Categories() {
   return (
     <div className="page">
       <div className="cat-header">
-        <h1 className="home-title">Categorías</h1>
+        <h1 className="page-title">Categorías</h1>
       </div>
 
       <CategoryTabs value={activeCat} onChange={(cat) => setSearchParams({ cat })} />
@@ -57,14 +57,14 @@ function Categories() {
                   <ListInfo list={list} meta={`${list.items?.length || 0} items · ${formatFecha(list.updatedAt || list.createdAt)}`} />
                 </div>
                 <div className="cat-list-actions">
-                  <button className="btn-edit" onClick={() => navigate(`/lista/${list.id}/editar`)}>
-                    <IconPencil size={18} color="#8C7E6E" />
+                  <button className="btn-icon" onClick={() => navigate(`/lista/${list.id}/editar`)}>
+                    <IconPencil size={18} />
                   </button>
-                  <button className="btn-copy" onClick={() => handleCopy(list.id)}>
-                    <IconCopy size={18} color="#8C7E6E" />
+                  <button className="btn-icon" onClick={() => handleCopy(list.id)}>
+                    <IconCopy size={18} />
                   </button>
-                  <button className="btn-delete" onClick={() => handleDelete(list.id)}>
-                    <IconTrash size={18} color="#C0392B" />
+                  <button className="btn-icon btn-icon--danger" onClick={() => handleDelete(list.id)}>
+                    <IconTrash size={18} />
                   </button>
                 </div>
               </div>
@@ -75,7 +75,7 @@ function Categories() {
 
       {filteredLists.length > 0 && (
         <button className="btn-fab" onClick={() => navigate(`/nueva?cat=${activeCat}`)}>
-          <IconPlus size={22} color="#fff" />
+          <IconPlus size={22} />
         </button>
       )}
 

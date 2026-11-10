@@ -2,34 +2,6 @@
   padding: 14px var(--space-xl) var(--space-sm);
 }
 
-.cat-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-xl);
-}
-
-.cat-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  border: 1.5px solid var(--color-crema-borde);
-  background: var(--color-blanco);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-texto-muted);
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.cat-tab--active {
-  background: var(--color-verde-oscuro);
-  border-color: var(--color-verde-oscuro);
-  color: var(--color-blanco);
-}
-
 .cat-content {
   padding: var(--space-md) var(--space-xl);
   padding-bottom: 100px;
@@ -62,15 +34,6 @@
   gap: var(--space-sm);
 }
 
-.btn-edit,
-.btn-delete,
-.btn-copy {
-  background: none;
-  border: none;
-  font-size: 18px;
-  padding: 4px;
-}
-
 .btn-go-new {
   margin-top: var(--space-lg);
   background: var(--color-verde-oscuro);
@@ -90,6 +53,7 @@
   height: 52px;
   border-radius: 50%;
   background: var(--color-verde-oscuro);
+  color: var(--color-blanco);
   border: none;
   display: flex;
   align-items: center;

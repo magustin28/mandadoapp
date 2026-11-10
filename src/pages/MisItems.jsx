@@ -48,7 +48,7 @@ function MisItems() {
   return (
     <div className="page">
       <div className="mis-header">
-        <h1 className="home-title">Mis items</h1>
+        <h1 className="page-title">Mis items</h1>
         <p className="mis-subtitle">Items sugeridos al crear una lista</p>
       </div>
 
@@ -73,18 +73,18 @@ function MisItems() {
                       ))}
                     </select>
                     <button className="btn-confirm" onClick={() => handleEditSave(item.id)}>
-                      <IconCheck size={16} color="#fff" />
+                      <IconCheck size={16} />
                     </button>
                   </>
                 ) : (
                   <>
                     <span className="mis-item-name">{item.name}</span>
                     <span className="mis-item-unit">{normalizarUnidad(item.unit) || ""}</span>
-                    <button className="btn-edit" onClick={() => handleEditStart(item)}>
-                      <IconPencil size={18} color="#8C7E6E" />
+                    <button className="btn-icon" onClick={() => handleEditStart(item)}>
+                      <IconPencil size={18} />
                     </button>
-                    <button className="btn-delete" onClick={() => handleDelete(item.id)}>
-                      <IconTrash size={18} color="#C0392B" />
+                    <button className="btn-icon btn-icon--danger" onClick={() => handleDelete(item.id)}>
+                      <IconTrash size={18} />
                     </button>
                   </>
                 )}
@@ -109,7 +109,7 @@ function MisItems() {
               ))}
             </select>
             <button className="btn-add-item" onClick={handleAdd}>
-              <IconPlus size={16} color="#fff" />
+              <IconPlus size={16} />
             </button>
           </div>
         </div>

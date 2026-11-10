@@ -7,52 +7,10 @@ import MisItems from "./pages/MisItems";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import Perfil from "./pages/Perfil";
+import LoadingScreen from "./components/layout/LoadingScreen";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ListsProvider } from "./hooks/useLists";
-
-function LoadingScreen() {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#F5F2EC",
-        gap: "12px",
-      }}
-    >
-      <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 14,
-          background: "#4A6741",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 24,
-          color: "#F5F2EC",
-          fontWeight: 600,
-          fontFamily: "Nunito, sans-serif",
-        }}
-      >
-        MA
-      </div>
-      <p
-        style={{
-          fontFamily: "Nunito, sans-serif",
-          fontSize: 14,
-          color: "#8C7E6E",
-        }}
-      >
-        Cargando...
-      </p>
-    </div>
-  );
-}
 
 function AppRoutes() {
   const { loading } = useAuth();

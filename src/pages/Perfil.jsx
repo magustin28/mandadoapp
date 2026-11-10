@@ -117,7 +117,7 @@ function Perfil() {
         </button>
 
         <button className="perfil-btn-danger" onClick={handleDeleteAccount} disabled={deleting}>
-          <IconTrash size={16} color="#C0392B" />
+          <IconTrash size={16} />
           {deleting ? "Eliminando cuenta..." : "Eliminar mi cuenta"}
         </button>
       </div>

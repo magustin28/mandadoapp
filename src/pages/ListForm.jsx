@@ -453,16 +453,20 @@ function ListForm() {
           />
           {canEdit && titleLocked && (
             <button type="button" className="btn-edit-title" onClick={() => setTitleLocked(false)}>
-              <IconPencil size={18} color="#4A6741" />
+              <IconPencil size={18} />
             </button>
           )}
         </div>
         <p className="section-label">Categoría</p>
         <div className="cat-tabs-scroll">
-          {CATEGORIAS.map(({ key, label, color, Icon }) => (
-            <button key={key} className={`cat-opt-tab ${category === key ? "cat-opt-tab--selected" : ""}`} onClick={() => handleCategoryChange(key)}>
+          {CATEGORIAS.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              className={`cat-opt-tab cat-color--${key} ${category === key ? "cat-opt-tab--selected" : ""}`}
+              onClick={() => handleCategoryChange(key)}
+            >
               <span>
-                <Icon size={20} color={category === key ? "#fff" : color} />
+                <Icon size={20} />
               </span>
               <span>{label}</span>
             </button>
@@ -486,16 +490,14 @@ function ListForm() {
               </div>
               {canEdit && storeLocked && (
                 <button type="button" className="btn-edit-title" onClick={() => setStoreLocked(false)}>
-                  <IconPencil size={18} color="#4A6741" />
+                  <IconPencil size={18} />
                 </button>
               )}
             </div>
           </>
         )}
         <div className="items-header">
-          <p className="section-label" style={{ margin: 0 }}>
-            Items
-          </p>
+          <p className="section-label section-label--flat">Items</p>
           <button
             ref={preloadedBtnRef}
             className="btn-preloaded"
@@ -612,17 +614,15 @@ function ListForm() {
           })}
           <button className="add-item-row" onClick={handleAddItem}>
             <span className="add-item-icon">
-              <IconPlus size={16} color="#4A6741" />
+              <IconPlus size={16} />
             </span>
             <span className="add-item-text">Agregar item</span>
           </button>
         </div>
         {(owner || !id) && (
           <>
-            <div className="items-header" style={{ marginTop: "var(--space-xl)" }}>
-              <p className="section-label" style={{ margin: 0 }}>
-                Colaboradores
-              </p>
+            <div className="items-header items-header--sep">
+              <p className="section-label section-label--flat">Colaboradores</p>
               <button
                 ref={collabBtnRef}
                 className="btn-preloaded"
@@ -696,17 +696,17 @@ function ListForm() {
       <div className="bottom-actions">
         <div className="bottom-actions-row">
           <button className="btn-save" onClick={handleSave} disabled={saving}>
-            <IconDeviceFloppy size={18} color="#fff" />
+            <IconDeviceFloppy size={18} />
             {saving ? "Guardando..." : "Guardar"}
           </button>
           <button className="btn-wap" onClick={handleWhatsApp} disabled={saving}>
-            <IconBrandWhatsapp size={18} color="#128C4F" />
+            <IconBrandWhatsapp size={18} />
             <span>WhatsApp</span>
           </button>
         </div>
         {isEditing && (
           <button className="btn-delete-list" onClick={handleDelete}>
-            <IconTrash size={16} color="#C0392B" />
+            <IconTrash size={16} />
             Eliminar lista
           </button>
         )}

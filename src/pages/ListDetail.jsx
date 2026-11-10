@@ -77,7 +77,7 @@ function ListDetail() {
       >
         {canEdit && (
           <button className="btn-nav-edit" onClick={() => navigate(`/lista/${id}/editar`)}>
-            <IconPencil size={18} color="#4A6741" />
+            <IconPencil size={18} />
           </button>
         )}
       </NavBar>
@@ -120,12 +120,12 @@ function ListDetail() {
 
       <div className="bottom-actions">
         <button className="btn-wap" onClick={() => sendWhatsApp(list)}>
-          <IconBrandWhatsapp size={18} color="#128C4F" />
+          <IconBrandWhatsapp size={18} />
           <span>Enviar por WhatsApp</span>
         </button>
         {owner && (
           <button className="btn-delete-list" onClick={handleDelete}>
-            <IconTrash size={16} color="#C0392B" />
+            <IconTrash size={16} />
             Eliminar lista
           </button>
         )}

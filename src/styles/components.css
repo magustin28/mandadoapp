@@ -1,9 +1,169 @@
 /* Estilos que comparten varias páginas. Antes vivían dentro del CSS de una sola
-   página (ListForm.css, Categories.css, Home.css) y, al entrar directo a otra
-   ruta, no se aplicaban. */
+   página (ListForm.css, Categories.css, Home.css, ListDetail.css) y, al entrar
+   directo a otra ruta, no se aplicaban. */
 
-/* Ícono chico al lado de un texto (por ejemplo la marca de lista compartida).
-   Reemplaza los style={{ marginLeft: 6 }} y los color="#4A6741" del JSX. */
+/* ── Títulos, etiquetas y textos ─────────────────────────────────────────── */
+
+/* Título de pantalla (Home, Categorías, Mis items). */
+.page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+  color: var(--color-texto-principal);
+}
+
+.section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--color-texto-muted);
+  text-transform: uppercase;
+  margin: var(--space-xl) 0 var(--space-sm);
+}
+
+/* Cuando el label va dentro de una fila que ya aporta el espacio. */
+.section-label--flat {
+  margin: 0;
+}
+
+/* Detalle de una lista (items + fecha). */
+.list-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-texto-muted);
+  margin-top: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-texto-muted);
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+}
+
+/* ── Barra superior con volver (NavBar) ──────────────────────────────────── */
+
+.nav-bar {
+  padding: var(--space-md) var(--space-xl) var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-blanco);
+  border: 1px solid var(--color-crema-borde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--color-texto-principal);
+  flex-shrink: 0;
+}
+
+.nav-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-title {
+  font-size: var(--font-size-xl);
+  font-weight: 500;
+  color: var(--color-texto-principal);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ── Pestañas de categoría (CategoryTabs) ────────────────────────────────── */
+
+.cat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-xl);
+}
+
+.cat-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-crema-borde);
+  background: var(--color-blanco);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-texto-muted);
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.cat-tab--active {
+  background: var(--color-verde-oscuro);
+  border-color: var(--color-verde-oscuro);
+  color: var(--color-blanco);
+}
+
+/* ── Botones de acción de una fila (editar / copiar / borrar) ────────────── */
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-texto-muted);
+}
+
+.btn-icon--danger {
+  color: #c0392b;
+}
+
+/* ── Color de cada categoría ─────────────────────────────────────────────── */
+
+/* La paleta se define una sola vez y el resto la toma de --cat-color: el
+   puntito de la lista, el cuadradito del Home y el ícono de la pestaña de
+   ListForm (antes los tres lo recibían por un style inline). */
+.cat-color--supermercado {
+  --cat-color: var(--color-verde-oscuro);
+}
+
+.cat-color--verduleria {
+  --cat-color: var(--color-verde-medio);
+}
+
+.cat-color--dietetica {
+  --cat-color: #6e8b3d;
+}
+
+.cat-color--farmacia {
+  --cat-color: #4a6fa5;
+}
+
+.cat-color--otros {
+  --cat-color: var(--color-tierra);
+}
+
+.list-dot,
+.cat-icon {
+  background: var(--cat-color);
+}
+
+/* El ícono de la tarjeta va en blanco sobre el color de la categoría. */
+.cat-icon {
+  color: var(--color-blanco);
+}
+
+/* ── Íconos con color y separación propios ───────────────────────────────── */
+
+/* Ícono chico al lado de un texto (por ejemplo la marca de lista compartida). */
 .icon-shared {
   margin-left: 6px;
   color: var(--color-verde-oscuro);
@@ -22,4 +182,90 @@
   margin-left: 6px;
   color: var(--color-verde-oscuro);
   flex-shrink: 0;
+}
+
+/* ── Separadores internos de ListForm ────────────────────────────────────── */
+
+.items-header--sep {
+  margin-top: var(--space-xl);
+}
+
+/* ── Pantalla de carga (LoadingScreen) ───────────────────────────────────── */
+
+.loader {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  background: var(--color-crema);
+}
+
+.loader-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--color-verde-oscuro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-crema);
+}
+
+.loader-text {
+  font-size: var(--font-size-md);
+  color: var(--color-texto-muted);
+}
+
+/* ── Barra inferior de acciones (ListForm y ListDetail) ──────────────────── */
+
+.bottom-actions {
+  position: fixed;
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  background: var(--color-crema);
+  border-top: 0.5px solid var(--color-crema-borde);
+  z-index: 50;
+}
+
+.btn-wap {
+  flex: 1;
+  background: var(--color-blanco);
+  border: 1.5px solid var(--color-wap);
+  border-radius: var(--radius-btn);
+  padding: var(--space-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-wap-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.btn-delete-list {
+  width: 100%;
+  background: #fdecea;
+  border: 1.5px solid #e8c4c4;
+  border-radius: var(--radius-btn);
+  padding: var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: #c0392b;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
 }

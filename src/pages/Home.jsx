@@ -61,7 +61,7 @@ function Home() {
     <div className="page">
       <div className="home-header">
         <div>
-          <h1 className="home-title">Hola{nombreUsuario ? ", " + nombreUsuario : ""} 👋</h1>
+          <h1 className="page-title">Hola{nombreUsuario ? ", " + nombreUsuario : ""} 👋</h1>
           <p className="home-subtitle">Mandado App</p>
         </div>
         <div className="home-user">
@@ -87,7 +87,7 @@ function Home() {
         <p className="section-label">Nueva lista</p>
         <button className="btn-new-list" onClick={() => navigate("/nueva")}>
           <div className="btn-new-icon">
-            <IconPlus size={22} color="#fff" />
+            <IconPlus size={22} />
           </div>
           <div>
             <p className="btn-new-main">Crear lista nueva</p>
@@ -100,10 +100,10 @@ function Home() {
 
         <p className="section-label">Categorías</p>
         <div className="categories-grid">
-          {CATEGORIAS.map(({ key, label, color, Icon }) => (
+          {CATEGORIAS.map(({ key, label, Icon }) => (
             <button key={key} className="cat-card" onClick={() => navigate(`/categorias?cat=${key}`)}>
-              <span className="cat-icon" style={{ background: color }}>
-                <Icon size={20} color="#fff" />
+              <span className={`cat-icon cat-color--${key}`}>
+                <Icon size={20} />
               </span>
               <span className="cat-info">
                 <span className="cat-name">{label}</span>
@@ -119,7 +119,7 @@ function Home() {
             <div className="recent-lists">
               {recientes.map((list) => (
                 <button key={list.id} className="list-item" onClick={() => navigate(`/lista/${list.id}`)}>
-                  <span className="list-dot" style={{ background: getCategoria(list.category)?.color }}></span>
+                  <span className={`list-dot cat-color--${list.category}`}></span>
                   <div className="list-info">
                     <ListInfo list={list} meta={`${getCategoria(list.category)?.label} · ${list.items?.length || 0} items`} />
                   </div>
