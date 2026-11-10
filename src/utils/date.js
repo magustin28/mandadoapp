@@ -34,3 +34,9 @@ export function formatFecha(value) {
   if (dias < DIAS_RELATIVOS) return `hace ${dias} días`;
   return formatFechaAbsoluta(value);
 }
+
+// Ordena listas (o cualquier cosa con fecha) de más nueva a más vieja.
+// El Home y Categorías repetían el mismo sort con new Date() adentro del render.
+export function masRecientes(items, campo = "updatedAt") {
+  return [...items].sort((a, b) => new Date(b[campo]) - new Date(a[campo]));
+}

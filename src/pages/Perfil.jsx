@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconUser, IconMail, IconLock, IconChevronLeft, IconTrash } from "@tabler/icons-react";
-import { useAuth } from "../hooks/useAuth";
-import { goBack } from "../utils/navigation";
-import { deleteMyAccount } from "../services/storage";
-import { useToast } from "../hooks/useToast";
-import { useConfirm } from "../hooks/useConfirm";
-import Toast from "../components/ui/Toast";
-import ConfirmModal from "../components/ui/ConfirmModal";
+import { IconUser, IconMail, IconLock, IconTrash } from "@tabler/icons-react";
+import FieldRow from "../components/ui/FieldRow";
 import Footer from "../components/layout/Footer";
+import NavBar from "../components/layout/NavBar";
+import PageUI from "../components/ui/PageUI";
+import { useAuth } from "../hooks/useAuth";
+import { usePageUI } from "../hooks/usePageUI";
+import { deleteMyAccount } from "../services/storage";
 import "./Perfil.css";
 import "./Auth.css";
 
 function Perfil() {
   const navigate = useNavigate();
   const { user, logout, updateProfile, getInitials } = useAuth();
-  const { toasts, success, error } = useToast();
-  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+  const ui = usePageUI();
+  // Los avisos se usan en varios handlers de esta pantalla.
+  const { success, error } = ui;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -66,30 +66,24 @@ function Perfil() {
   }
 
   async function handleDeleteAccount() {
-    const confirmed = await ask("Se van a borrar tus listas, colaboradores e historial. Esta acción no se puede deshacer.", "Eliminar mi cuenta");
-    if (!confirmed) return;
-
     setDeleting(true);
-    try {
-      await deleteMyAccount();
-      await logout();
-      navigate("/login");
-    } catch (err) {
-      console.error("Error eliminando la cuenta:", err);
-      error("No se pudo eliminar la cuenta. Intentá de nuevo.");
-    } finally {
-      setDeleting(false);
-    }
+    const borrada = await ui.confirmarYHacer({
+      mensaje: "Se van a borrar tus listas, colaboradores e historial. Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar mi cuenta",
+      accion: deleteMyAccount,
+      contextoError: "Error eliminando la cuenta:",
+      mensajeError: "No se pudo eliminar la cuenta. Intentá de nuevo.",
+    });
+    setDeleting(false);
+    if (!borrada) return;
+
+    await logout();
+    navigate("/login");
   }
 
   return (
     <div className="page">
-      <div className="nav-bar">
-        <button className="nav-back" onClick={() => goBack(navigate)}>
-          <IconChevronLeft size={20} />
-        </button>
-        <span className="nav-title">Mi perfil</span>
-      </div>
+      <NavBar title="Mi perfil" />
 
       <div className="perfil-content">
         <div className="perfil-avatar-wrap">
@@ -101,39 +95,21 @@ function Perfil() {
         <p className="section-label">Datos personales</p>
 
         <div className="perfil-form">
-          <div className="perfil-field">
-            <IconUser size={18} color="#8C7E6E" />
-            <input className="perfil-input" type="text" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="perfil-field">
-            <IconMail size={18} color="#8C7E6E" />
-            <input className="perfil-input" type="email" placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
+          <FieldRow icon={IconUser} type="text" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} />
+          <FieldRow icon={IconMail} type="email" placeholder="tu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
 
         <p className="section-label">Cambiar contraseña</p>
 
         <div className="perfil-form">
-          <div className="perfil-field">
-            <IconLock size={18} color="#8C7E6E" />
-            <input
-              className="perfil-input"
-              type="password"
-              placeholder="Nueva contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div className="perfil-field">
-            <IconLock size={18} color="#8C7E6E" />
-            <input
-              className="perfil-input"
-              type="password"
-              placeholder="Repetir contraseña"
-              value={password2}
-              onChange={(e) => setPassword2(e.target.value)}
-            />
-          </div>
+          <FieldRow icon={IconLock} type="password" placeholder="Nueva contraseña" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <FieldRow
+            icon={IconLock}
+            type="password"
+            placeholder="Repetir contraseña"
+            value={password2}
+            onChange={(e) => setPassword2(e.target.value)}
+          />
         </div>
 
         <button className="auth-btn-primary" onClick={handleSave} disabled={saving}>
@@ -146,8 +122,7 @@ function Perfil() {
         </button>
       </div>
 
-      <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} confirmLabel={confirm.confirmLabel} onConfirm={handleConfirm} onCancel={handleCancel} />}
+      <PageUI ui={ui} />
       <Footer />
     </div>
   );

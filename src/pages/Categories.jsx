@@ -1,31 +1,31 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { IconPencil, IconTrash, IconCopy, IconPlus } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
+import CategoryTabs from "../components/ui/CategoryTabs";
+import ListInfo from "../components/ui/ListInfo";
+import PageUI from "../components/ui/PageUI";
 import { useLists } from "../hooks/useLists";
-import { IconPencil, IconTrash, IconCopy, IconUsers, IconPlus } from "@tabler/icons-react";
-import { CATEGORIAS } from "../utils/categories";
+import { usePageUI } from "../hooks/usePageUI";
+import { formatFecha, masRecientes } from "../utils/date";
 import "./Categories.css";
-import { useToast } from "../hooks/useToast";
-import { useConfirm } from "../hooks/useConfirm";
-import Toast from "../components/ui/Toast";
-import ConfirmModal from "../components/ui/ConfirmModal";
-import { formatFecha } from "../utils/date";
 
 function Categories() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { getByCategory, removeList, duplicateList } = useLists();
+  const ui = usePageUI();
 
   const activeCat = searchParams.get("cat") || "supermercado";
-  const filteredLists = getByCategory(activeCat).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-  const { toasts, success } = useToast();
-  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+  const filteredLists = masRecientes(getByCategory(activeCat));
 
-  async function handleDelete(id) {
-    const confirmed = await ask("¿Eliminar esta lista?");
-    if (confirmed) {
-      await removeList(id);
-      success("Lista eliminada");
-    }
+  function handleDelete(id) {
+    return ui.confirmarYHacer({
+      mensaje: "¿Eliminar esta lista?",
+      accion: () => removeList(id),
+      exito: "Lista eliminada",
+      contextoError: "Error eliminando la lista:",
+      mensajeError: "No se pudo eliminar la lista. Intentá de nuevo.",
+    });
   }
 
   async function handleCopy(id) {
@@ -38,16 +38,8 @@ function Categories() {
       <div className="cat-header">
         <h1 className="home-title">Categorías</h1>
       </div>
-      <div className="cat-tabs">
-        {CATEGORIAS.map(({ key, label, Icon }) => (
-          <button key={key} className={`cat-tab ${activeCat === key ? "cat-tab--active" : ""}`} onClick={() => setSearchParams({ cat: key })}>
-            <span>
-              <Icon size={18} />
-            </span>
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
+
+      <CategoryTabs value={activeCat} onChange={(cat) => setSearchParams({ cat })} />
 
       <div className="cat-content">
         {filteredLists.length === 0 ? (
@@ -62,15 +54,8 @@ function Categories() {
             {filteredLists.map((list) => (
               <div key={list.id} className="cat-list-card">
                 <div className="cat-list-info" onClick={() => navigate(`/lista/${list.id}`)}>
-                  {" "}
-                  <p className="list-name">
-                    {list.name}
-                    {list.isShared && <IconUsers size={14} color="#4A6741" style={{ marginLeft: 6, verticalAlign: "middle", flexShrink: 0 }} />}
-                  </p>
-                  <p className="list-meta">
-                    {list.items?.length || 0} items · {formatFecha(list.updatedAt || list.createdAt)}
-                  </p>
-                </div>{" "}
+                  <ListInfo list={list} meta={`${list.items?.length || 0} items · ${formatFecha(list.updatedAt || list.createdAt)}`} />
+                </div>
                 <div className="cat-list-actions">
                   <button className="btn-edit" onClick={() => navigate(`/lista/${list.id}/editar`)}>
                     <IconPencil size={18} color="#8C7E6E" />
@@ -94,8 +79,7 @@ function Categories() {
         </button>
       )}
 
-      <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
+      <PageUI ui={ui} />
 
       <Footer />
     </div>

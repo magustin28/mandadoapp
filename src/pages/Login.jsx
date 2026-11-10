@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import AuthField from "../components/ui/AuthField";
+import AuthSwitch from "../components/ui/AuthSwitch";
+import GoogleButton from "../components/ui/GoogleButton";
 import { useAuth } from "../hooks/useAuth";
 import "./Auth.css";
 
@@ -50,53 +53,35 @@ function Login() {
       <div className="auth-form">
         {error && <div className="auth-error">{error}</div>}
 
-        <div className="auth-field">
-          <label className="auth-label">Email</label>
-          <input
-            className="auth-input"
-            type="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Email"
+          type="email"
+          placeholder="tu@email.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError("");
+          }}
+        />
 
-        <div className="auth-field">
-          <label className="auth-label">Contraseña</label>
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Tu contraseña"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Contraseña"
+          type="password"
+          placeholder="Tu contraseña"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError("");
+          }}
+        />
 
         <button className="auth-btn-primary" onClick={handleLogin} disabled={loading}>
           {loading ? "Ingresando..." : "Ingresar"}
         </button>
 
-        <div className="auth-divider">
-          <span>o</span>
-        </div>
+        <GoogleButton label="Continuar con Google" onClick={handleGoogleLogin} />
 
-        <button className="auth-btn-google" onClick={handleGoogleLogin}>
-          <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="Google" />
-          Continuar con Google
-        </button>
-
-        <p className="auth-link-text">
-          ¿No tenés cuenta?{" "}
-          <Link to="/registro" className="auth-link">
-            Registrate
-          </Link>
-        </p>
+        <AuthSwitch question="¿No tenés cuenta?" linkLabel="Registrate" to="/registro" />
       </div>
     </div>
   );

@@ -1,0 +1,25 @@
+/* Estilos que comparten varias páginas. Antes vivían dentro del CSS de una sola
+   página (ListForm.css, Categories.css, Home.css) y, al entrar directo a otra
+   ruta, no se aplicaban. */
+
+/* Ícono chico al lado de un texto (por ejemplo la marca de lista compartida).
+   Reemplaza los style={{ marginLeft: 6 }} y los color="#4A6741" del JSX. */
+.icon-shared {
+  margin-left: 6px;
+  color: var(--color-verde-oscuro);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Ícono de un campo de formulario (Perfil). */
+.field-icon {
+  color: var(--color-texto-secundario);
+  flex-shrink: 0;
+}
+
+/* Ícono pegado al título de la pantalla (ListForm). */
+.icon-inline {
+  margin-left: 6px;
+  color: var(--color-verde-oscuro);
+  flex-shrink: 0;
+}

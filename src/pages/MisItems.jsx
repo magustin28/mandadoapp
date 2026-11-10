@@ -1,14 +1,12 @@
 import { useState } from "react";
-import Footer from "../components/layout/Footer";
-import { usePreloadedItems } from "../hooks/useLists";
 import { IconPencil, IconTrash, IconCheck, IconPlus } from "@tabler/icons-react";
-import { CATEGORIAS } from "../utils/categories";
-import "./MisItems.css";
-import { useToast } from "../hooks/useToast";
-import { useConfirm } from "../hooks/useConfirm";
-import Toast from "../components/ui/Toast";
-import ConfirmModal from "../components/ui/ConfirmModal";
+import Footer from "../components/layout/Footer";
+import CategoryTabs from "../components/ui/CategoryTabs";
+import PageUI from "../components/ui/PageUI";
+import { usePreloadedItems } from "../hooks/useLists";
+import { usePageUI } from "../hooks/usePageUI";
 import { UNIDADES, normalizarUnidad } from "../utils/items";
+import "./MisItems.css";
 
 function MisItems() {
   const [activeCat, setActiveCat] = useState("supermercado");
@@ -18,9 +16,7 @@ function MisItems() {
   const [editData, setEditData] = useState({});
 
   const { items, addItem, editItem, removeItem } = usePreloadedItems(activeCat);
-
-  const { toasts, success } = useToast();
-  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+  const ui = usePageUI();
 
   async function handleAdd() {
     if (!newName.trim()) return;
@@ -39,12 +35,14 @@ function MisItems() {
     setEditingId(null);
   }
 
-  async function handleDelete(id) {
-    const confirmed = await ask("¿Eliminar este item?");
-    if (confirmed) {
-      await removeItem(id);
-      success("Item eliminado");
-    }
+  function handleDelete(id) {
+    return ui.confirmarYHacer({
+      mensaje: "¿Eliminar este item?",
+      accion: () => removeItem(id),
+      exito: "Item eliminado",
+      contextoError: "Error eliminando el item:",
+      mensajeError: "No se pudo eliminar el item. Intentá de nuevo.",
+    });
   }
 
   return (
@@ -54,16 +52,7 @@ function MisItems() {
         <p className="mis-subtitle">Items sugeridos al crear una lista</p>
       </div>
 
-      <div className="cat-tabs">
-        {CATEGORIAS.map(({ key, label, Icon }) => (
-          <button key={key} className={`cat-tab ${activeCat === key ? "cat-tab--active" : ""}`} onClick={() => setActiveCat(key)}>
-            <span>
-              <Icon size={18} />
-            </span>
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
+      <CategoryTabs value={activeCat} onChange={setActiveCat} />
 
       <div className="mis-content">
         <div className="items-container">
@@ -126,8 +115,7 @@ function MisItems() {
         </div>
       </div>
 
-      <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
+      <PageUI ui={ui} />
 
       <Footer />
     </div>

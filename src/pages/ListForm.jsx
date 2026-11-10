@@ -1,29 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import {
-  IconChevronLeft,
-  IconDeviceFloppy,
-  IconBrandWhatsapp,
-  IconTrash,
-  IconPlus,
-  IconUsers,
-  IconUserPlus,
-  IconX,
-  IconPencil,
-} from "@tabler/icons-react";
+import { IconDeviceFloppy, IconBrandWhatsapp, IconTrash, IconPlus, IconUsers, IconUserPlus, IconX, IconPencil } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
+import NavBar from "../components/layout/NavBar";
+import PageUI from "../components/ui/PageUI";
 import { useLists, usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
+import { usePageUI } from "../hooks/usePageUI";
+import { useBackClose } from "../hooks/useBackClose";
 import { sendWhatsApp } from "../utils/whatsapp";
 import { CANTIDADES, UNIDADES, formatCantidad, normalizarUnidad } from "../utils/items";
 import { CATEGORIAS, CATEGORY_LABELS } from "../utils/categories";
-import { goBack } from "../utils/navigation";
-import { useBackClose } from "../hooks/useBackClose";
 import { getProfileByEmail, searchProfiles, addCollaborators, addMissingPreloadedItems } from "../services/storage";
-import { useToast } from "../hooks/useToast";
-import { useConfirm } from "../hooks/useConfirm";
-import Toast from "../components/ui/Toast";
-import ConfirmModal from "../components/ui/ConfirmModal";
 import "./ListForm.css";
 
 const CATEGORIES_WITH_STORES = ["supermercado"];
@@ -62,8 +50,9 @@ function ListForm() {
   const { stores } = useStores(category);
   const { getByName: getPriceByName } = usePriceHistory();
 
-  const { toasts, success, error } = useToast();
-  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+  const ui = usePageUI();
+  // Los avisos se usan en varios handlers de esta pantalla.
+  const { success, error } = ui;
 
   const [showCollabPanel, setShowCollabPanel] = useState(false);
 
@@ -326,16 +315,13 @@ function ListForm() {
   }
 
   async function handleDelete() {
-    const confirmed = await ask("¿Eliminar esta lista?");
-    if (!confirmed) return;
-
-    try {
-      await removeList(id);
-      navigate("/categorias");
-    } catch (err) {
-      console.error("Error eliminando la lista:", err);
-      error("No se pudo eliminar la lista. Intentá de nuevo.");
-    }
+    const borrada = await ui.confirmarYHacer({
+      mensaje: "¿Eliminar esta lista?",
+      accion: () => removeList(id),
+      contextoError: "Error eliminando la lista:",
+      mensajeError: "No se pudo eliminar la lista. Intentá de nuevo.",
+    });
+    if (borrada) navigate("/categorias");
   }
 
   if (isEditing && !loaded) return null;
@@ -376,16 +362,13 @@ function ListForm() {
     }
   }
 
-  async function handleRemoveCollaborator(userId, name) {
-    const confirmed = await ask(`¿Eliminar a ${name} como colaborador?`);
-    if (!confirmed) return;
-
-    try {
-      await remove(userId);
-    } catch (err) {
-      console.error("Error eliminando colaborador:", err);
-      error("No se pudo eliminar el colaborador. Intentá de nuevo.");
-    }
+  function handleRemoveCollaborator(userId, name) {
+    return ui.confirmarYHacer({
+      mensaje: `¿Eliminar a ${name} como colaborador?`,
+      accion: () => remove(userId),
+      contextoError: "Error eliminando colaborador:",
+      mensajeError: "No se pudo eliminar el colaborador. Intentá de nuevo.",
+    });
   }
 
   function handleToggleExpand(itemId) {
@@ -447,20 +430,15 @@ function ListForm() {
 
   return (
     <div className="page">
-      <div className="nav-bar">
-        <button className="nav-back" onClick={() => goBack(navigate)}>
-          <IconChevronLeft size={20} />
-        </button>
-        <div>
-          <span className="nav-title">
+      <NavBar
+        title={
+          <>
             {isEditing ? "Editar lista" : "Nueva lista"}
-            {id && (collab || collaborators.length > 0 || pendingCollabs.length > 0) && (
-              <IconUsers size={16} color="#4A6741" style={{ marginLeft: 6 }} />
-            )}
-          </span>
-          {collab && ownerName && <p className="nav-subtitle">Compartida por {ownerName}</p>}
-        </div>
-      </div>
+            {id && (collab || collaborators.length > 0 || pendingCollabs.length > 0) && <IconUsers size={16} className="icon-inline" />}
+          </>
+        }
+        subtitle={collab && ownerName ? `Compartida por ${ownerName}` : undefined}
+      />
 
       <div className="listform-content">
         <p className="section-label">Nombre de la lista</p>
@@ -734,8 +712,7 @@ function ListForm() {
         )}
       </div>
 
-      <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
+      <PageUI ui={ui} />
 
       <Footer />
     </div>

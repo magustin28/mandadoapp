@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import AuthField from "../components/ui/AuthField";
+import AuthSwitch from "../components/ui/AuthSwitch";
+import GoogleButton from "../components/ui/GoogleButton";
 import { useAuth } from "../hooks/useAuth";
 import "./Auth.css";
 
@@ -69,81 +72,57 @@ function Registro() {
         {error && <div className="auth-error">{error}</div>}
         {info && <div className="auth-info">{info}</div>}
 
-        <div className="auth-field">
-          <label className="auth-label">Nombre</label>
-          <input
-            className="auth-input"
-            type="text"
-            placeholder="Tu nombre"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Nombre"
+          type="text"
+          placeholder="Tu nombre"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError("");
+          }}
+        />
 
-        <div className="auth-field">
-          <label className="auth-label">Email</label>
-          <input
-            className="auth-input"
-            type="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Email"
+          type="email"
+          placeholder="tu@email.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError("");
+          }}
+        />
 
-        <div className="auth-field">
-          <label className="auth-label">Contraseña</label>
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Contraseña"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError("");
+          }}
+        />
 
-        <div className="auth-field">
-          <label className="auth-label">Repetir contraseña</label>
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Repetí tu contraseña"
-            value={password2}
-            onChange={(e) => {
-              setPassword2(e.target.value);
-              setError("");
-            }}
-          />
-        </div>
+        <AuthField
+          label="Repetir contraseña"
+          type="password"
+          placeholder="Repetí tu contraseña"
+          value={password2}
+          onChange={(e) => {
+            setPassword2(e.target.value);
+            setError("");
+          }}
+        />
 
         <button className="auth-btn-primary" onClick={handleRegister} disabled={loading}>
           {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
-        <div className="auth-divider">
-          <span>o</span>
-        </div>
+        <GoogleButton label="Registrarse con Google" onClick={handleGoogleRegister} />
 
-        <button className="auth-btn-google" onClick={handleGoogleRegister}>
-          <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="Google" />
-          Registrarse con Google
-        </button>
-
-        <p className="auth-link-text">
-          ¿Ya tenés cuenta?{" "}
-          <Link to="/login" className="auth-link">
-            Ingresá
-          </Link>
-        </p>
+        <AuthSwitch question="¿Ya tenés cuenta?" linkLabel="Ingresá" to="/login" />
       </div>
     </div>
   );

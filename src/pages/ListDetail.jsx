@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { IconChevronLeft, IconPencil, IconBrandWhatsapp, IconUsers, IconTrash } from "@tabler/icons-react";
+import { IconPencil, IconBrandWhatsapp, IconUsers, IconTrash } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
-import Toast from "../components/ui/Toast";
-import ConfirmModal from "../components/ui/ConfirmModal";
+import NavBar from "../components/layout/NavBar";
+import PageUI from "../components/ui/PageUI";
 import { useLists, useCollaborators } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
-import { useToast } from "../hooks/useToast";
-import { useConfirm } from "../hooks/useConfirm";
+import { usePageUI } from "../hooks/usePageUI";
 import { sendWhatsApp } from "../utils/whatsapp";
 import { formatFecha } from "../utils/date";
 import { formatearCantidadUnidad } from "../utils/items";
 import { CATEGORY_LABELS } from "../utils/categories";
-import { goBack } from "../utils/navigation";
 import "./ListDetail.css";
 
 function ListDetail() {
@@ -21,8 +19,7 @@ function ListDetail() {
   const { getById, fetchById, removeList } = useLists();
   const { user } = useAuth();
   const { collaborators } = useCollaborators(id);
-  const { toasts, error } = useToast();
-  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+  const ui = usePageUI();
 
   const [list, setList] = useState(null);
 
@@ -54,15 +51,13 @@ function ListDetail() {
   }, [id]);
 
   async function handleDelete() {
-    const confirmed = await ask("¿Eliminar esta lista?");
-    if (!confirmed) return;
-    try {
-      await removeList(id);
-      navigate("/categorias");
-    } catch (err) {
-      console.error("Error eliminando la lista:", err);
-      error("No se pudo eliminar la lista. Intentá de nuevo.");
-    }
+    const borrada = await ui.confirmarYHacer({
+      mensaje: "¿Eliminar esta lista?",
+      accion: () => removeList(id),
+      contextoError: "Error eliminando la lista:",
+      mensajeError: "No se pudo eliminar la lista. Intentá de nuevo.",
+    });
+    if (borrada) navigate("/categorias");
   }
 
   if (!list || !user) return null;
@@ -76,22 +71,16 @@ function ListDetail() {
 
   return (
     <div className="page">
-      <div className="nav-bar">
-        <button className="nav-back" onClick={() => goBack(navigate)}>
-          <IconChevronLeft size={20} />
-        </button>
-        <div className="nav-info">
-          <span className="nav-title">{list.name}</span>
-          <span className="nav-subtitle">
-            {CATEGORY_LABELS[list.category]} · {isEdited ? "Actualizada" : "Creada"} {formatFecha(isEdited ? list.updatedAt : list.createdAt)}
-          </span>
-        </div>
+      <NavBar
+        title={list.name}
+        subtitle={`${CATEGORY_LABELS[list.category]} · ${isEdited ? "Actualizada" : "Creada"} ${formatFecha(isEdited ? list.updatedAt : list.createdAt)}`}
+      >
         {canEdit && (
           <button className="btn-nav-edit" onClick={() => navigate(`/lista/${id}/editar`)}>
             <IconPencil size={18} color="#4A6741" />
           </button>
         )}
-      </div>
+      </NavBar>
 
       {isShared && (
         <div className="detail-shared-info">
@@ -142,8 +131,7 @@ function ListDetail() {
         )}
       </div>
 
-      <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />}
+      <PageUI ui={ui} />
 
       <Footer />
     </div>
