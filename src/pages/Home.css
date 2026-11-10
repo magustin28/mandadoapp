@@ -11,7 +11,7 @@
   align-items: flex-start;
 }
 
-.home-greeting {
+.home-subtitle {
   font-size: var(--font-size-sm);
   color: var(--color-texto-muted);
 }
@@ -22,11 +22,16 @@
   color: var(--color-texto-principal);
 }
 
+.home-user {
+  position: relative;
+}
+
 .home-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
   background: #c8b89a;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,6 +39,41 @@
   font-weight: 500;
   color: #5c4a35;
   cursor: pointer;
+  font-family: inherit;
+}
+
+.home-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  background: var(--color-blanco);
+  border: 1px solid var(--color-crema-borde);
+  border-radius: var(--radius-card);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.home-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: var(--font-size-md);
+  color: var(--color-texto-principal);
+}
+
+.home-menu-item + .home-menu-item {
+  border-top: 0.5px solid #eee9e2;
+}
+
+.home-menu-item:active {
+  background: var(--color-crema);
 }
 
 .home-content {
@@ -47,6 +87,11 @@
   color: var(--color-texto-muted);
   text-transform: uppercase;
   margin: var(--space-xl) 0 var(--space-sm);
+}
+
+/* El header ya aporta separación: el primer label no la duplica */
+.home-content > .section-label:first-child {
+  margin-top: var(--space-xs);
 }
 
 .btn-new-list {

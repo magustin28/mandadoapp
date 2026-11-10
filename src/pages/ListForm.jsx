@@ -19,7 +19,7 @@ import { CANTIDADES, UNIDADES, formatCantidad, normalizarUnidad } from "../utils
 import { CATEGORIAS, CATEGORY_LABELS } from "../utils/categories";
 import { goBack } from "../utils/navigation";
 import { useBackClose } from "../hooks/useBackClose";
-import { getProfileByEmail, searchProfiles, addCollaborators } from "../services/storage";
+import { getProfileByEmail, searchProfiles, addCollaborators, addMissingPreloadedItems } from "../services/storage";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
@@ -194,7 +194,7 @@ function ListForm() {
         quantity: null,
         unit: "",
         price: null,
-        ver: true,
+        ver: false,
         expanded: false,
       },
     ]);
@@ -231,7 +231,7 @@ function ListForm() {
           quantity: null,
           unit: normalizarUnidad(preloadedItem.unit) || "",
           price: history?.price || null,
-          ver: !history?.price,
+          ver: false,
           expanded: false,
         },
       ]);
@@ -248,6 +248,16 @@ function ListForm() {
       return false;
     }
     return true;
+  }
+
+  // Los ítems que no estaban en las sugerencias se guardan en "Mis items"
+  // para la próxima lista. Si falla, no rompe el guardado de la lista.
+  async function guardarItemsNuevos() {
+    try {
+      await addMissingPreloadedItems(category, items);
+    } catch (err) {
+      console.error("No se pudieron guardar los ítems nuevos como sugerencias:", err);
+    }
   }
 
   async function handleSave() {
@@ -273,6 +283,8 @@ function ListForm() {
         success("Lista creada");
         setTimeout(() => navigate("/"), 1000);
       }
+
+      await guardarItemsNuevos();
     } catch (err) {
       console.error("Error guardando la lista:", err);
       error("No se pudo guardar la lista. Intentá de nuevo.");
@@ -304,6 +316,8 @@ function ListForm() {
         sendWhatsApp(newList);
         setTimeout(() => navigate("/"), 500);
       }
+
+      await guardarItemsNuevos();
     } catch (err) {
       console.error("Error guardando la lista para WhatsApp:", err);
       error("No se pudo guardar la lista. Intentá de nuevo.");

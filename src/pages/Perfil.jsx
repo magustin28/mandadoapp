@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconUser, IconMail, IconLock, IconLogout, IconChevronLeft } from "@tabler/icons-react";
+import { IconUser, IconMail, IconLock, IconChevronLeft, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../hooks/useAuth";
 import { goBack } from "../utils/navigation";
+import { deleteMyAccount } from "../services/storage";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import Toast from "../components/ui/Toast";
@@ -22,6 +23,7 @@ function Perfil() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -63,11 +65,20 @@ function Perfil() {
     }
   }
 
-  async function handleLogout() {
-    const confirmed = await ask("¿Cerrar sesión?");
-    if (confirmed) {
+  async function handleDeleteAccount() {
+    const confirmed = await ask("Se van a borrar tus listas, colaboradores e historial. Esta acción no se puede deshacer.", "Eliminar mi cuenta");
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteMyAccount();
       await logout();
       navigate("/login");
+    } catch (err) {
+      console.error("Error eliminando la cuenta:", err);
+      error("No se pudo eliminar la cuenta. Intentá de nuevo.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -129,14 +140,14 @@ function Perfil() {
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
 
-        <button className="perfil-btn-logout" onClick={handleLogout}>
-          <IconLogout size={18} color="#C0392B" />
-          Cerrar sesión
+        <button className="perfil-btn-danger" onClick={handleDeleteAccount} disabled={deleting}>
+          <IconTrash size={16} color="#C0392B" />
+          {deleting ? "Eliminando cuenta..." : "Eliminar mi cuenta"}
         </button>
       </div>
 
       <Toast toasts={toasts} />
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} confirmLabel="Cerrar sesión" />}
+      {confirm && <ConfirmModal message={confirm.message} confirmLabel={confirm.confirmLabel} onConfirm={handleConfirm} onCancel={handleCancel} />}
       <Footer />
     </div>
   );

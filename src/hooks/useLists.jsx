@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getLists,
   getListById,
@@ -19,9 +19,8 @@ import {
   getPriceHistory,
 } from "../services/storage";
 import { supabase } from "../lib/supabaseClient";
+import { ListsContext } from "./listsContext";
 import { useAuth } from "./useAuth";
-
-const ListsContext = createContext(null);
 
 // El fetch de listas se hace UNA sola vez acá y se comparte entre todas las
 // páginas (Home, Categories, ListForm, ListDetail...) — antes cada página
@@ -129,13 +128,9 @@ export function ListsProvider({ children }) {
   return <ListsContext.Provider value={value}>{children}</ListsContext.Provider>;
 }
 
-export function useLists() {
-  const ctx = useContext(ListsContext);
-  if (!ctx) {
-    throw new Error("useLists debe usarse dentro de <ListsProvider>");
-  }
-  return ctx;
-}
+// El hook vive en ./listsContext (junto al contexto) y se re-exporta para no
+// cambiar los imports de las páginas.
+export { useLists } from "./listsContext";
 
 // Estos hooks son puntuales por página (una categoría, una lista) y no
 // tienen el mismo problema de refetch entre navegaciones, así que quedan

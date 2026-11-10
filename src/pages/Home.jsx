@@ -1,27 +1,82 @@
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconPlus, IconChevronRight, IconUsers } from "@tabler/icons-react";
+import { IconPlus, IconChevronRight, IconUsers, IconUser, IconLogout } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
+import Toast from "../components/ui/Toast";
+import ConfirmModal from "../components/ui/ConfirmModal";
 import { useLists } from "../hooks/useLists";
 import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
+import { useBackClose } from "../hooks/useBackClose";
 import { CATEGORIAS, getCategoria } from "../utils/categories";
 import "./Home.css";
 
 function Home() {
   const navigate = useNavigate();
   const { lists, getByCategory } = useLists();
-  const { getInitials } = useAuth();
+  const { user, logout, getInitials } = useAuth();
+  const { toasts } = useToast();
+  const { confirm, ask, handleConfirm, handleCancel } = useConfirm();
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const menuRef = useRef(null);
+  const menuBtnRef = useRef(null);
+
+  const nombreUsuario = user?.name?.split(" ")[0] || "";
 
   const recientes = [...lists].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 3);
+
+  // Cerrar el menú del avatar al tocar afuera.
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuAbierto && menuRef.current && !menuRef.current.contains(e.target) && !menuBtnRef.current?.contains(e.target)) {
+        setMenuAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAbierto]);
+
+  // El gesto atrás del celular cierra el menú.
+  useBackClose(menuAbierto, () => setMenuAbierto(false));
+
+  function irAPerfil() {
+    setMenuAbierto(false);
+    navigate("/perfil");
+  }
+
+  async function handleLogout() {
+    const confirmed = await ask("Vas a salir de tu cuenta en este dispositivo.", "Cerrar sesión");
+    setMenuAbierto(false);
+    if (!confirmed) return;
+    await logout();
+    navigate("/login");
+  }
 
   return (
     <div className="page">
       <div className="home-header">
         <div>
-          <p className="home-greeting">Buen día 👋</p>
-          <h1 className="home-title">MandadoApp</h1>
+          <h1 className="home-title">Hola{nombreUsuario ? ", " + nombreUsuario : ""} 👋</h1>
+          <p className="home-subtitle">MandadoApp</p>
         </div>
-        <div className="home-avatar" onClick={() => navigate("/perfil")}>
-          {getInitials()}
+        <div className="home-user">
+          <button ref={menuBtnRef} className="home-avatar" onClick={() => setMenuAbierto((v) => !v)} aria-label="Cuenta">
+            {getInitials()}
+          </button>
+          {menuAbierto && (
+            <div ref={menuRef} className="home-menu">
+              <button className="home-menu-item" onClick={irAPerfil}>
+                <IconUser size={18} color="#8C7E6E" />
+                Mi Perfil
+              </button>
+              <button className="home-menu-item" onClick={handleLogout}>
+                <IconLogout size={18} color="#C0392B" />
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -85,6 +140,9 @@ function Home() {
           </div>
         )}
       </div>
+
+      <Toast toasts={toasts} />
+      {confirm && <ConfirmModal message={confirm.message} confirmLabel={confirm.confirmLabel} onConfirm={handleConfirm} onCancel={handleCancel} />}
 
       <Footer />
     </div>

@@ -4,9 +4,9 @@ import { useBackClose } from "./useBackClose";
 export function useConfirm() {
   const [confirm, setConfirm] = useState(null);
 
-  const ask = useCallback((message) => {
+  const ask = useCallback((message, confirmLabel) => {
     return new Promise((resolve) => {
-      setConfirm({ message, resolve });
+      setConfirm({ message, confirmLabel, resolve });
     });
   }, []);
 

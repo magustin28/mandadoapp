@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
+import { normalizarUnidad } from "../utils/items";
 
 async function getUserId() {
   const {
@@ -198,6 +199,32 @@ export async function deletePreloadedItem(category, id) {
   if (error) throw error;
 }
 
+// Guarda como sugerencias (en "Mis items") los ítems de una lista que todavía
+// no estaban, para que aparezcan la próxima vez. No pisa los existentes.
+export async function addMissingPreloadedItems(category, items) {
+  const userId = await getUserId();
+  if (!items?.length) return;
+
+  const { data: existentes, error } = await supabase.from("preloaded_items").select("name").eq("category", category);
+  if (error) throw error;
+
+  const yaEstan = new Set((existentes || []).map((row) => (row.name || "").trim().toLowerCase()));
+
+  const nuevos = [];
+  for (const item of items) {
+    const nombre = (item.name || "").trim();
+    if (!nombre) continue;
+    const clave = nombre.toLowerCase();
+    if (yaEstan.has(clave)) continue;
+    yaEstan.add(clave);
+    nuevos.push({ name: nombre, unit: normalizarUnidad(item.unit), category, owner_id: userId });
+  }
+
+  if (!nuevos.length) return;
+  const { error: insertError } = await supabase.from("preloaded_items").insert(nuevos);
+  if (insertError) throw insertError;
+}
+
 // ---------- Comercios ----------
 
 export async function getStores(category) {
@@ -297,6 +324,12 @@ export async function removeCollaborator(listId, userId) {
 // ---------- Historial de precios ----------
 
 const PRICE_HISTORY_LIMIT = 500;
+
+// Elimina la cuenta del usuario (RPC con SECURITY DEFINER en Supabase).
+export async function deleteMyAccount() {
+  const { error } = await supabase.rpc("delete_my_account");
+  if (error) throw error;
+}
 
 export async function getPriceHistory() {
   const userId = await getUserId();

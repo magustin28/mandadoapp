@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./authContext";
 
 // Después del redirect de Google Auth, la URL trae el token en el hash
 // (#access_token=...). Supabase lo lee para armar la sesión, pero a veces
@@ -166,10 +165,6 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth debe usarse dentro de <AuthProvider>");
-  }
-  return ctx;
-}
+// El hook vive en ./authContext (junto al contexto) y se re-exporta para no
+// cambiar los imports del resto de la app.
+export { useAuth } from "./authContext";

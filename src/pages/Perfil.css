@@ -78,11 +78,10 @@
   text-align: center;
 }
 
-.perfil-btn-logout {
+.perfil-btn-danger {
   width: 100%;
-  background: #FDECEA;
-  border: 1.5px solid #E8C4C4;
-  border-radius: var(--radius-btn);
+  background: none;
+  border: none;
   padding: var(--space-md);
   font-size: var(--font-size-md);
   font-weight: 500;
@@ -91,5 +90,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+
+.perfil-btn-danger:disabled {
+  opacity: 0.6;
 }
