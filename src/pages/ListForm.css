@@ -539,12 +539,6 @@
   background: var(--color-crema);
 }
 
-.btn-save:disabled,
-.btn-wap:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .store-chip--locked {
   opacity: 0.6;
   cursor: default;

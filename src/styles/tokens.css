@@ -29,6 +29,10 @@
   --space-xl: 20px;
   --space-2xl: 24px;
 
+  /* Altura del footer fijo. Es la referencia para todo lo que se apoya abajo:
+     el padding de .page y la posición de la barra .bottom-actions. */
+  --footer-h: 76px;
+
   /* Tipografía */
   --font-size-xs: 11px;
   --font-size-sm: 12px;

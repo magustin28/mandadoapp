@@ -11,7 +11,7 @@
 .page {
   min-height: 100vh;
   min-height: 100dvh;
-  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--footer-h) + 14px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ── Títulos, etiquetas y textos ─────────────────────────────────────────── */
@@ -250,7 +250,7 @@
 
 .bottom-actions {
   position: fixed;
-  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--footer-h) + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   max-width: 430px;
@@ -262,6 +262,26 @@
   background: var(--color-crema);
   border-top: 0.5px solid var(--color-crema-borde);
   z-index: 50;
+}
+
+.bottom-actions-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.btn-save {
+  flex: 1;
+  background: var(--color-verde-oscuro);
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: var(--space-lg);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
 }
 
 .btn-wap {
@@ -306,4 +326,10 @@
 
 .btn-delete-list:disabled {
   opacity: 0.6;
+}
+
+.btn-save:disabled,
+.btn-wap:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
