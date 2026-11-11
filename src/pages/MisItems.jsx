@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { IconPencil, IconTrash, IconCheck, IconPlus } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import CategoryTabs from "../components/ui/CategoryTabs";
 import IconButton from "../components/ui/IconButton";
 import PageUI from "../components/ui/PageUI";
-import { usePreloadedItems } from "../hooks/listsData";
+import PriceBadge from "../components/ui/PriceBadge";
+import { usePreloadedItems, usePriceHistory } from "../hooks/listsData";
+import { useBackClose } from "../hooks/useBackClose";
 import { usePageUI } from "../hooks/usePageUI";
 import { UNIDADES, normalizarUnidad, ordenarPorNombre } from "../utils/items";
 import "./MisItems.css";
@@ -17,10 +19,26 @@ function MisItems() {
   const [editData, setEditData] = useState({});
 
   const { items, addItem, editItem, removeItem } = usePreloadedItems(activeCat);
+  const { getByName: getPriceByName } = usePriceHistory();
   const ui = usePageUI();
 
   // Se muestran siempre en orden alfabético (colación española).
   const itemsOrdenados = ordenarPorNombre(items);
+
+  // Al editar una fila, tocar afuera (o el gesto atrás del celular) cancela la edición.
+  const editRowRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (editingId && editRowRef.current && !editRowRef.current.contains(e.target)) {
+        setEditingId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [editingId]);
+
+  useBackClose(Boolean(editingId), () => setEditingId(null));
 
   async function handleAdd() {
     if (!newName.trim()) return;
@@ -62,8 +80,9 @@ function MisItems() {
         <div className="items-container">
           {itemsOrdenados.map((item) => {
             const unidadEdit = normalizarUnidad(editData.unit) || "";
+            const precio = getPriceByName(item.name)?.price;
             return (
-              <div key={item.id} className="mis-item-row">
+              <div key={item.id} className="mis-item-row" ref={editingId === item.id ? editRowRef : undefined}>
                 {editingId === item.id ? (
                   <>
                     <input className="item-input-name" value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
@@ -84,6 +103,7 @@ function MisItems() {
                   <>
                     <span className="mis-item-name">{item.name}</span>
                     <span className="mis-item-unit">{normalizarUnidad(item.unit) || ""}</span>
+                    <PriceBadge price={precio} />
                     <IconButton icon={IconPencil} label="Editar item" onClick={() => handleEditStart(item)} />
                     <IconButton icon={IconTrash} label="Eliminar item" variant="danger" onClick={() => handleDelete(item.id)} />
                   </>

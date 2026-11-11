@@ -204,7 +204,9 @@ export async function addMissingPreloadedItems(category, items) {
     const clave = nombre.toLowerCase();
     if (yaEstan.has(clave)) continue;
     yaEstan.add(clave);
-    nuevos.push({ name: nombre, unit: normalizarUnidad(item.unit), category, owner_id: userId });
+    // Se guarda con la unidad que tenía el ítem en la lista; si no tenía, "unid."
+    // (el mismo default que usa el formulario de Mis items).
+    nuevos.push({ name: nombre, unit: normalizarUnidad(item.unit) || "unid.", category, owner_id: userId });
   }
 
   if (!nuevos.length) return;

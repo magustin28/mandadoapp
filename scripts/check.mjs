@@ -46,11 +46,13 @@ for (const paso of PASOS) {
     if (m) pista = ` (${m[1]})`;
   } else if (paso.nombre === "format:check") {
     // Prettier lista cada archivo con problemas como "[warn] <ruta>" y cierra con otro "[warn] Code
-    // style issues found...": el resumen final no trae la cantidad, así que se cuentan las apariciones
-    // (el lookahead descarta la del resumen). No se ancla al inicio de línea a propósito: Prettier
-    // emite códigos de color antes del "[warn]", y para anclar habría que limpiarlos con una regex que
-    // oxlint marca (no-control-regex).
-    const n = (salida.match(/\[warn\] (?!Code style)/g) || []).length;
+    // style issues found...": el resumen final no trae la cantidad, así que se cuentan las líneas de
+    // archivo (el lookahead descarta la del resumen).
+    // Los códigos de color se sacan con una regex armada desde String.fromCharCode: escribir el escape
+    // literal en la regex haría que oxlint la marque (no-control-regex).
+    const ansi = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
+    const limpio = salida.replace(ansi, "");
+    const n = (limpio.match(/^\[warn\] (?!Code style)/gm) || []).length;
     pista = n ? ` (${n} sin formatear)` : " (sin problemas)";
   } else {
     // Oxlint cierra con "Found N warnings and M errors."

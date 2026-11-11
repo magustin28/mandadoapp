@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 export function useToast() {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = "success", duration = 3000) => {
+  const addToast = useCallback((message, type = "success", duration = 4500) => {
     const id = crypto.randomUUID();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {

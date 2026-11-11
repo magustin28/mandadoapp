@@ -6,6 +6,7 @@ import NavBar from "../components/layout/NavBar";
 import DeleteButton from "../components/ui/DeleteButton";
 import IconButton from "../components/ui/IconButton";
 import PageUI from "../components/ui/PageUI";
+import PriceBadge from "../components/ui/PriceBadge";
 import { useLists } from "../hooks/listsContext";
 import { useAuth } from "../hooks/authContext";
 import { usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/listsData";
@@ -18,6 +19,11 @@ import { getProfileByEmail, searchProfiles, addCollaborators, addMissingPreloade
 import "./ListForm.css";
 
 const CATEGORIES_WITH_STORES = ["supermercado"];
+
+// Cuánto se deja visible el toast antes de navegar. El toast vive en esta pantalla,
+// así que si se navega enseguida desaparece y casi no se llega a leer.
+const ESPERA_TOAST = 1800;
+const ESPERA_TOAST_WAP = 1300;
 
 function ListForm() {
   const navigate = useNavigate();
@@ -301,7 +307,7 @@ function ListForm() {
       if (isEditing) {
         await editList(id, { name: finalName, category, items, store: selectedStore });
         success("Lista guardada");
-        setTimeout(() => navigate(`/categorias?cat=${category}`), 1000);
+        setTimeout(() => navigate(`/categorias?cat=${category}`), ESPERA_TOAST);
       } else {
         const newList = await addList({ name: finalName, category, items, store: selectedStore });
         if (pendingCollabs.length > 0) {
@@ -311,7 +317,7 @@ function ListForm() {
           );
         }
         success("Lista creada");
-        setTimeout(() => navigate("/"), 1000);
+        setTimeout(() => navigate("/"), ESPERA_TOAST);
       }
 
       await guardarItemsNuevos();
@@ -334,7 +340,7 @@ function ListForm() {
       if (isEditing) {
         await editList(id, { name: finalName, category, items, store: selectedStore });
         sendWhatsApp({ name: finalName, category, items });
-        setTimeout(() => navigate(`/categorias?cat=${category}`), 500);
+        setTimeout(() => navigate(`/categorias?cat=${category}`), ESPERA_TOAST_WAP);
       } else {
         const newList = await addList({ name: finalName, category, items, store: selectedStore });
         if (pendingCollabs.length > 0) {
@@ -344,7 +350,7 @@ function ListForm() {
           );
         }
         sendWhatsApp(newList);
-        setTimeout(() => navigate("/"), 500);
+        setTimeout(() => navigate("/"), ESPERA_TOAST_WAP);
       }
 
       await guardarItemsNuevos();
@@ -590,7 +596,7 @@ function ListForm() {
                     // el tap en VER / expandir / borrar llegue a la fila correcta antes de moverla.
                     onBlur={() => setTimeout(() => setItems((prev) => ordenarPorNombre(prev)), 250)}
                   />
-                  {priceInfo && !item.expanded && <span className="item-price-badge">${Number(priceInfo.price).toLocaleString("es-AR")}</span>}
+                  {!item.expanded && <PriceBadge price={priceInfo?.price} />}
                   <button className={`btn-ver ${item.ver ? "btn-ver--active" : ""}`} onClick={() => handleItemChange(item.id, "ver", !item.ver)}>
                     VER
                   </button>
