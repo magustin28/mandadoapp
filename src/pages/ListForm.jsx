@@ -26,6 +26,9 @@ function ListForm() {
   const catParam = searchParams.get("cat");
   const initialCategory = CATEGORIAS.some((c) => c.key === catParam) ? catParam : "supermercado";
   const isEditing = Boolean(id);
+  // Si venimos de "Duplicar lista" (?copia=<id>), el formulario se precarga con la lista
+  // original y la copia se crea recién si el usuario toca Guardar.
+  const copiaDeId = isEditing ? null : searchParams.get("copia");
 
   const { user } = useAuth();
   const { lists, getById, fetchById, addList, editList, removeList } = useLists();
@@ -116,6 +119,33 @@ function ListForm() {
 
   useEffect(() => {
     if (!isEditing) {
+      // Copia: se precarga el formulario con la lista original (ítems nuevos, todos
+      // desmarcados) y la copia se crea recién si el usuario toca Guardar.
+      if (copiaDeId) {
+        let cancelled = false;
+
+        async function cargarOrigen() {
+          const cached = getById(copiaDeId);
+          const origen = cached || (await fetchById(copiaDeId).catch(() => null));
+          if (cancelled) return;
+
+          if (origen) {
+            setName(`${origen.name} (copia)`);
+            setCategory(origen.category);
+            setItems(ordenarPorNombre((origen.items || []).map((i) => ({ ...i, id: crypto.randomUUID(), ver: false }))));
+            setSelectedStore(origen.store || null);
+          } else {
+            setName(getDefaultName(initialCategory, null));
+          }
+          setLoaded(true);
+        }
+
+        cargarOrigen();
+        return () => {
+          cancelled = true;
+        };
+      }
+
       setName(getDefaultName(initialCategory, null));
       setLoaded(true);
       return;
@@ -152,21 +182,23 @@ function ListForm() {
   }, [id]);
 
   function handleStoreSelect(store) {
+    // En una lista nueva "de cero" el nombre se autogenera con el comercio; en una
+    // copia el nombre ya viene puesto y no se toca.
+    const autogenera = !isEditing && !copiaDeId;
     if (selectedStore === store.name) {
       setSelectedStore(null);
-      if (!isEditing) setName(getDefaultName(category, null));
+      if (autogenera) setName(getDefaultName(category, null));
     } else {
       setSelectedStore(store.name);
-      if (!isEditing) setName(getDefaultName(category, store.name));
+      if (autogenera) setName(getDefaultName(category, store.name));
     }
   }
 
   function handleCategoryChange(key) {
-    if (!isEditing) {
-      // Solo al crear: saca del carrito los items que eran sugerencias de
-      // la categoría anterior y sugiere un nombre nuevo. Al editar una
-      // lista ya guardada, cambiar de categoría no debe tocar ni el
-      // nombre ni los items que ya armaste.
+    // Solo al crear una lista de cero: saca del carrito los items que eran sugerencias de
+    // la categoría anterior y sugiere un nombre nuevo. Al editar una lista guardada o al
+    // precargar una copia, cambiar de categoría no debe tocar el nombre ni los items.
+    if (!isEditing && !copiaDeId) {
       const preloadedNames = preloaded.map((p) => p.name);
       const nonPreloaded = items.filter((i) => !preloadedNames.includes(i.name));
       setItems(nonPreloaded);

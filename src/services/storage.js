@@ -157,16 +157,6 @@ export async function deleteList(id) {
   if (error) throw error;
 }
 
-export async function copyList(id) {
-  const original = await getListById(id);
-  return saveList({
-    name: `${original.name} (copia)`,
-    category: original.category,
-    store: original.store,
-    items: original.items.map((item) => ({ ...item, id: undefined, ver: false })),
-  });
-}
-
 // ---------- Items precargables ----------
 
 export async function getPreloadedItems(category) {

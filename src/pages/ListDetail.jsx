@@ -11,7 +11,7 @@ import { useCollaborators } from "../hooks/listsData";
 import { usePageUI } from "../hooks/usePageUI";
 import { sendWhatsApp } from "../utils/whatsapp";
 import { formatFecha } from "../utils/date";
-import { formatearCantidadUnidad } from "../utils/items";
+import { formatearCantidadUnidad, ordenarPorNombre } from "../utils/items";
 import { CATEGORY_LABELS } from "../utils/categories";
 import "./ListDetail.css";
 
@@ -71,6 +71,10 @@ function ListDetail() {
   const isShared = collaborators.length > 0;
   const collabNames = collaborators.map((c) => c.name).filter(Boolean);
 
+  // Los ítems se muestran siempre en orden alfabético, igual que en el formulario
+  // (las listas guardadas antes de este cambio también quedan ordenadas).
+  const items = ordenarPorNombre(list.items || []);
+
   return (
     <div className="page">
       <NavBar
@@ -102,7 +106,7 @@ function ListDetail() {
 
       <div className="detail-content">
         <div className="detail-items">
-          {list.items?.map((item) => {
+          {items.map((item) => {
             const cantidad = formatearCantidadUnidad(item);
             return (
               <div key={item.id} className="detail-item-row">

@@ -13,7 +13,7 @@ import "./Categories.css";
 function Categories() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getByCategory, removeList, duplicateList } = useLists();
+  const { getByCategory, removeList } = useLists();
   const ui = usePageUI();
 
   const activeCat = searchParams.get("cat") || "supermercado";
@@ -29,9 +29,10 @@ function Categories() {
     });
   }
 
-  async function handleCopy(id) {
-    const copy = await duplicateList(id);
-    navigate(`/lista/${copy.id}`);
+  function handleCopy(id) {
+    // Abre el formulario precargado con la lista original: la copia se guarda recién
+    // si el usuario toca Guardar.
+    navigate(`/nueva?copia=${id}`);
   }
 
   return (

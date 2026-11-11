@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getLists, getListById, saveList, updateList, deleteList, copyList } from "../services/storage";
+import { getLists, getListById, saveList, updateList, deleteList } from "../services/storage";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "./authContext";
 import { ListsContext } from "./listsContext";
@@ -89,12 +89,6 @@ export function ListsProvider({ children }) {
     return lists.filter((l) => l.category === category);
   }
 
-  async function duplicateList(id) {
-    const copy = await copyList(id);
-    await refresh();
-    return copy;
-  }
-
   const value = {
     lists,
     loading,
@@ -104,7 +98,6 @@ export function ListsProvider({ children }) {
     getById,
     fetchById,
     getByCategory,
-    duplicateList,
   };
 
   return <ListsContext.Provider value={value}>{children}</ListsContext.Provider>;
