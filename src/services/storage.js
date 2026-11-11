@@ -1,11 +1,14 @@
 import { supabase } from "../lib/supabaseClient";
 import { normalizarUnidad } from "../utils/items";
 
+// Devuelve el id del usuario logueado usando la sesión local (getSession).
+// Antes usaba getUser(), que valida el token contra la red: si esa llamada fallaba
+// (por ejemplo sin conexión), devolvía undefined y los insert fallaban en silencio.
 async function getUserId() {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id;
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user?.id;
 }
 
 function mapItem(row) {

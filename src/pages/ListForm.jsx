@@ -12,7 +12,7 @@ import { usePreloadedItems, useStores, useCollaborators, usePriceHistory } from 
 import { usePageUI } from "../hooks/usePageUI";
 import { useBackClose } from "../hooks/useBackClose";
 import { sendWhatsApp } from "../utils/whatsapp";
-import { CANTIDADES, UNIDADES, formatCantidad, normalizarUnidad } from "../utils/items";
+import { CANTIDADES, UNIDADES, formatCantidad, normalizarUnidad, ordenarPorNombre } from "../utils/items";
 import { CATEGORIAS, CATEGORY_LABELS } from "../utils/categories";
 import { getProfileByEmail, searchProfiles, addCollaborators, addMissingPreloadedItems } from "../services/storage";
 import "./ListForm.css";
@@ -137,7 +137,7 @@ function ListForm() {
 
       setName(list.name);
       setCategory(list.category);
-      setItems(list.items || []);
+      setItems(ordenarPorNombre(list.items || []));
       setSelectedStore(list.store || null);
       setOwnerId(list.owner_id);
       setOwnerNameFromList(list.ownerName);
@@ -177,18 +177,20 @@ function ListForm() {
   }
 
   function handleAddItem() {
-    setItems([
-      ...items,
-      {
-        id: crypto.randomUUID(),
-        name: "",
-        quantity: null,
-        unit: "",
-        price: null,
-        ver: false,
-        expanded: false,
-      },
-    ]);
+    setItems(
+      ordenarPorNombre([
+        ...items,
+        {
+          id: crypto.randomUUID(),
+          name: "",
+          quantity: null,
+          unit: "",
+          price: null,
+          ver: false,
+          expanded: false,
+        },
+      ]),
+    );
   }
 
   function handleItemChange(itemId, field, value) {
@@ -214,18 +216,20 @@ function ListForm() {
       setItems(items.filter((i) => i.name !== preloadedItem.name));
     } else {
       const history = getPriceByName(preloadedItem.name);
-      setItems([
-        ...items,
-        {
-          id: crypto.randomUUID(),
-          name: preloadedItem.name,
-          quantity: null,
-          unit: normalizarUnidad(preloadedItem.unit) || "",
-          price: history?.price || null,
-          ver: false,
-          expanded: false,
-        },
-      ]);
+      setItems(
+        ordenarPorNombre([
+          ...items,
+          {
+            id: crypto.randomUUID(),
+            name: preloadedItem.name,
+            quantity: null,
+            unit: normalizarUnidad(preloadedItem.unit) || "",
+            price: history?.price || null,
+            ver: false,
+            expanded: false,
+          },
+        ]),
+      );
     }
   }
 
@@ -247,7 +251,10 @@ function ListForm() {
     try {
       await addMissingPreloadedItems(category, items);
     } catch (err) {
+      // No rompe el guardado, pero se avisa: si falla, los ítems nuevos no van a
+      // aparecer en "Mis items" y el usuario se entera.
       console.error("No se pudieron guardar los ítems nuevos como sugerencias:", err);
+      error("Los ítems nuevos no se pudieron guardar en Mis items");
     }
   }
 
@@ -547,6 +554,9 @@ function ListForm() {
                     placeholder="Item..."
                     value={item.name}
                     onChange={(e) => handleItemNameChange(item.id, e.target.value)}
+                    // Al salir del campo se reordena alfabéticamente. El pequeño delay es para que
+                    // el tap en VER / expandir / borrar llegue a la fila correcta antes de moverla.
+                    onBlur={() => setTimeout(() => setItems((prev) => ordenarPorNombre(prev)), 250)}
                   />
                   {priceInfo && !item.expanded && <span className="item-price-badge">${Number(priceInfo.price).toLocaleString("es-AR")}</span>}
                   <button className={`btn-ver ${item.ver ? "btn-ver--active" : ""}`} onClick={() => handleItemChange(item.id, "ver", !item.ver)}>

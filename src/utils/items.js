@@ -53,3 +53,15 @@ export function formatearCantidadUnidad(item) {
   const unidad = normalizarUnidad(item.unit);
   return unidad ? `${cant} ${unidad}` : cant;
 }
+
+// Ordena los ítems alfabéticamente (colación española: la ñ va después de la n).
+// Los que todavía no tienen nombre van al final, para no saltar mientras se escribe.
+export function ordenarPorNombre(items) {
+  return [...items].sort((a, b) => {
+    const na = (a.name || "").trim();
+    const nb = (b.name || "").trim();
+    if (!na) return 1;
+    if (!nb) return -1;
+    return na.localeCompare(nb, "es", { sensitivity: "base" });
+  });
+}

@@ -2,6 +2,18 @@
    página (ListForm.css, Categories.css, Home.css, ListDetail.css) y, al entrar
    directo a otra ruta, no se aplicaban. */
 
+/* ── Contenedor de página ────────────────────────────────────────────────── */
+
+/* Todas las pantallas van dentro de .page. El padding de abajo deja libre el
+   footer fijo (~62px) más un margen. Antes vivía en Home.css, así que al entrar
+   directo a otra ruta (por ejemplo desde un link a /lista/:id) no se aplicaba y
+   el final del contenido quedaba tapado por el footer y la barra de acciones. */
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+}
+
 /* ── Títulos, etiquetas y textos ─────────────────────────────────────────── */
 
 /* Título de pantalla (Home, Categorías, Mis items). */

@@ -11,9 +11,12 @@
   color: var(--color-verde-oscuro);
 }
 
+/* El padding de abajo deja libre la barra fija .bottom-actions (que arranca a
+   90px del borde y mide ~120px con el botón de eliminar), así el último ítem no
+   queda detrás de Guardar/WhatsApp. */
 .detail-content {
   padding: 0 var(--space-xl);
-  padding-bottom: 120px;
+  padding-bottom: 230px;
 }
 
 .detail-items {

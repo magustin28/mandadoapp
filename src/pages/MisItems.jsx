@@ -6,7 +6,7 @@ import IconButton from "../components/ui/IconButton";
 import PageUI from "../components/ui/PageUI";
 import { usePreloadedItems } from "../hooks/listsData";
 import { usePageUI } from "../hooks/usePageUI";
-import { UNIDADES, normalizarUnidad } from "../utils/items";
+import { UNIDADES, normalizarUnidad, ordenarPorNombre } from "../utils/items";
 import "./MisItems.css";
 
 function MisItems() {
@@ -18,6 +18,9 @@ function MisItems() {
 
   const { items, addItem, editItem, removeItem } = usePreloadedItems(activeCat);
   const ui = usePageUI();
+
+  // Se muestran siempre en orden alfabético (colación española).
+  const itemsOrdenados = ordenarPorNombre(items);
 
   async function handleAdd() {
     if (!newName.trim()) return;
@@ -57,7 +60,7 @@ function MisItems() {
 
       <div className="mis-content">
         <div className="items-container">
-          {items.map((item) => {
+          {itemsOrdenados.map((item) => {
             const unidadEdit = normalizarUnidad(editData.unit) || "";
             return (
               <div key={item.id} className="mis-item-row">
