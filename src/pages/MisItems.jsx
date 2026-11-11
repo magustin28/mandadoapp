@@ -2,8 +2,9 @@ import { useState } from "react";
 import { IconPencil, IconTrash, IconCheck, IconPlus } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import CategoryTabs from "../components/ui/CategoryTabs";
+import IconButton from "../components/ui/IconButton";
 import PageUI from "../components/ui/PageUI";
-import { usePreloadedItems } from "../hooks/useLists";
+import { usePreloadedItems } from "../hooks/listsData";
 import { usePageUI } from "../hooks/usePageUI";
 import { UNIDADES, normalizarUnidad } from "../utils/items";
 import "./MisItems.css";
@@ -80,12 +81,8 @@ function MisItems() {
                   <>
                     <span className="mis-item-name">{item.name}</span>
                     <span className="mis-item-unit">{normalizarUnidad(item.unit) || ""}</span>
-                    <button className="btn-icon" onClick={() => handleEditStart(item)}>
-                      <IconPencil size={18} />
-                    </button>
-                    <button className="btn-icon btn-icon--danger" onClick={() => handleDelete(item.id)}>
-                      <IconTrash size={18} />
-                    </button>
+                    <IconButton icon={IconPencil} label="Editar item" onClick={() => handleEditStart(item)} />
+                    <IconButton icon={IconTrash} label="Eliminar item" danger onClick={() => handleDelete(item.id)} />
                   </>
                 )}
               </div>

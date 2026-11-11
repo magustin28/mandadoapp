@@ -4,8 +4,8 @@ import { IconPlus, IconChevronRight, IconUser, IconLogout } from "@tabler/icons-
 import Footer from "../components/layout/Footer";
 import ListInfo from "../components/ui/ListInfo";
 import PageUI from "../components/ui/PageUI";
-import { useLists } from "../hooks/useLists";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/authContext";
+import { useLists } from "../hooks/listsContext";
 import { usePageUI } from "../hooks/usePageUI";
 import { useBackClose } from "../hooks/useBackClose";
 import { CATEGORIAS, getCategoria } from "../utils/categories";
@@ -71,11 +71,11 @@ function Home() {
           {menuAbierto && (
             <div ref={menuRef} className="home-menu">
               <button className="home-menu-item" onClick={irAPerfil}>
-                <IconUser size={18} color="#8C7E6E" />
+                <IconUser size={18} className="icon-muted" />
                 Mi Perfil
               </button>
               <button className="home-menu-item" onClick={handleLogout}>
-                <IconLogout size={18} color="#C0392B" />
+                <IconLogout size={18} className="icon-danger" />
                 Cerrar sesión
               </button>
             </div>
@@ -94,7 +94,7 @@ function Home() {
             <p className="btn-new-sub">Supermercado, verdulería u otro</p>
           </div>
           <span className="btn-new-arrow">
-            <IconChevronRight size={20} color="#B0A89E" />
+            <IconChevronRight size={20} />
           </span>
         </button>
 
@@ -123,7 +123,7 @@ function Home() {
                   <div className="list-info">
                     <ListInfo list={list} meta={`${getCategoria(list.category)?.label} · ${list.items?.length || 0} items`} />
                   </div>
-                  <IconChevronRight size={18} color="#C4BCB0" />
+                  <IconChevronRight size={18} className="list-arrow" />
                 </button>
               ))}{" "}
             </div>

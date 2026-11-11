@@ -98,3 +98,8 @@
   color: var(--color-verde-oscuro);
   font-weight: 500;
 }
+
+/* El ícono de "compartida" toma el verde del tema. */
+.detail-shared-info svg {
+  color: var(--color-verde-oscuro);
+}

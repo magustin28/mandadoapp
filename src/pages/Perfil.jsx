@@ -5,7 +5,7 @@ import FieldRow from "../components/ui/FieldRow";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
 import PageUI from "../components/ui/PageUI";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/authContext";
 import { usePageUI } from "../hooks/usePageUI";
 import { deleteMyAccount } from "../services/storage";
 import "./Perfil.css";

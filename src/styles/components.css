@@ -184,6 +184,19 @@
   flex-shrink: 0;
 }
 
+/* Colores sueltos que antes iban en el prop color de cada <Icon>. */
+.icon-muted {
+  color: var(--color-texto-muted);
+}
+
+.icon-soft {
+  color: #c4bcb0;
+}
+
+.icon-danger {
+  color: #c0392b;
+}
+
 /* ── Separadores internos de ListForm ────────────────────────────────────── */
 
 .items-header--sep {

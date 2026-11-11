@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { IconPencil, IconBrandWhatsapp, IconUsers, IconTrash } from "@tabler/icons-react";
+import { IconPencil, IconBrandWhatsapp, IconUsers } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
+import DeleteListButton from "../components/ui/DeleteListButton";
 import PageUI from "../components/ui/PageUI";
-import { useLists, useCollaborators } from "../hooks/useLists";
-import { useAuth } from "../hooks/useAuth";
+import { useLists } from "../hooks/listsContext";
+import { useAuth } from "../hooks/authContext";
+import { useCollaborators } from "../hooks/listsData";
 import { usePageUI } from "../hooks/usePageUI";
 import { sendWhatsApp } from "../utils/whatsapp";
 import { formatFecha } from "../utils/date";
@@ -84,7 +86,7 @@ function ListDetail() {
 
       {isShared && (
         <div className="detail-shared-info">
-          <IconUsers size={14} color="#4A6741" />
+          <IconUsers size={14} />
           {collab && list.ownerName && (
             <span>
               Compartida por <strong>{list.ownerName}</strong>
@@ -123,12 +125,7 @@ function ListDetail() {
           <IconBrandWhatsapp size={18} />
           <span>Enviar por WhatsApp</span>
         </button>
-        {owner && (
-          <button className="btn-delete-list" onClick={handleDelete}>
-            <IconTrash size={16} />
-            Eliminar lista
-          </button>
-        )}
+        {owner && <DeleteListButton onClick={handleDelete} />}
       </div>
 
       <PageUI ui={ui} />

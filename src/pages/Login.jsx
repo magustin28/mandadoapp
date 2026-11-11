@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import AuthField from "../components/ui/AuthField";
 import AuthSwitch from "../components/ui/AuthSwitch";
 import GoogleButton from "../components/ui/GoogleButton";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/authContext";
 import "./Auth.css";
 
 function Login() {

@@ -3,9 +3,11 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { IconDeviceFloppy, IconBrandWhatsapp, IconTrash, IconPlus, IconUsers, IconUserPlus, IconX, IconPencil } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
+import DeleteListButton from "../components/ui/DeleteListButton";
 import PageUI from "../components/ui/PageUI";
-import { useLists, usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/useLists";
-import { useAuth } from "../hooks/useAuth";
+import { useLists } from "../hooks/listsContext";
+import { useAuth } from "../hooks/authContext";
+import { usePreloadedItems, useStores, useCollaborators, usePriceHistory } from "../hooks/listsData";
 import { usePageUI } from "../hooks/usePageUI";
 import { useBackClose } from "../hooks/useBackClose";
 import { sendWhatsApp } from "../utils/whatsapp";
@@ -553,7 +555,7 @@ function ListForm() {
                     {item.expanded ? "−" : "+"}
                   </button>
                   <button className="item-del" onClick={() => handleRemoveItem(item.id)}>
-                    <IconTrash size={16} color="#C4BCB0" />
+                    <IconTrash size={16} className="icon-soft" />
                   </button>
                 </div>
 
@@ -649,7 +651,7 @@ function ListForm() {
                           : setPendingCollabs(pendingCollabs.filter((p) => p.id !== c.id))
                       }
                     >
-                      <IconX size={14} color="#C0392B" />
+                      <IconX size={14} className="icon-danger" />
                     </button>
                   </div>
                 ))}
@@ -683,7 +685,7 @@ function ListForm() {
                       )}
                     </div>
                     <button className="btn-collab-add" onClick={handleAddCollaborator}>
-                      <IconUserPlus size={18} color="#fff" />
+                      <IconUserPlus size={18} />
                     </button>
                   </div>
                 </div>
@@ -704,12 +706,7 @@ function ListForm() {
             <span>WhatsApp</span>
           </button>
         </div>
-        {isEditing && (
-          <button className="btn-delete-list" onClick={handleDelete}>
-            <IconTrash size={16} />
-            Eliminar lista
-          </button>
-        )}
+        {isEditing && <DeleteListButton onClick={handleDelete} />}
       </div>
 
       <PageUI ui={ui} />

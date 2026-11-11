@@ -2,9 +2,10 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { IconPencil, IconTrash, IconCopy, IconPlus } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import CategoryTabs from "../components/ui/CategoryTabs";
+import IconButton from "../components/ui/IconButton";
 import ListInfo from "../components/ui/ListInfo";
 import PageUI from "../components/ui/PageUI";
-import { useLists } from "../hooks/useLists";
+import { useLists } from "../hooks/listsContext";
 import { usePageUI } from "../hooks/usePageUI";
 import { formatFecha, masRecientes } from "../utils/date";
 import "./Categories.css";
@@ -57,15 +58,9 @@ function Categories() {
                   <ListInfo list={list} meta={`${list.items?.length || 0} items · ${formatFecha(list.updatedAt || list.createdAt)}`} />
                 </div>
                 <div className="cat-list-actions">
-                  <button className="btn-icon" onClick={() => navigate(`/lista/${list.id}/editar`)}>
-                    <IconPencil size={18} />
-                  </button>
-                  <button className="btn-icon" onClick={() => handleCopy(list.id)}>
-                    <IconCopy size={18} />
-                  </button>
-                  <button className="btn-icon btn-icon--danger" onClick={() => handleDelete(list.id)}>
-                    <IconTrash size={18} />
-                  </button>
+                  <IconButton icon={IconPencil} label="Editar lista" onClick={() => navigate(`/lista/${list.id}/editar`)} />
+                  <IconButton icon={IconCopy} label="Duplicar lista" onClick={() => handleCopy(list.id)} />
+                  <IconButton icon={IconTrash} label="Eliminar lista" danger onClick={() => handleDelete(list.id)} />
                 </div>
               </div>
             ))}

@@ -313,6 +313,7 @@
 .btn-collab-add {
   width: 40px;
   height: 40px;
+  color: var(--color-blanco);
   border-radius: 50%;
   background: var(--color-verde-oscuro);
   border: none;

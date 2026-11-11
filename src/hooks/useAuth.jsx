@@ -160,7 +160,3 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-// El hook vive en ./authContext (junto al contexto) y se re-exporta para no
-// cambiar los imports del resto de la app.
-export { useAuth } from "./authContext";

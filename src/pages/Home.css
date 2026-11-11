@@ -119,7 +119,7 @@
 
 .btn-new-arrow {
   margin-left: auto;
-  color: var(--color-texto-muted);
+  color: #b0a89e;
   font-size: 22px;
 }
 
@@ -203,6 +203,6 @@
 }
 
 .list-arrow {
-  color: var(--color-texto-muted);
+  color: #c4bcb0;
   font-size: 22px;
 }

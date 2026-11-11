@@ -9,7 +9,8 @@ import Registro from "./pages/Registro";
 import Perfil from "./pages/Perfil";
 import LoadingScreen from "./components/layout/LoadingScreen";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks/useAuth";
+import { useAuth } from "./hooks/authContext";
 import { ListsProvider } from "./hooks/useLists";
 
 function AppRoutes() {
