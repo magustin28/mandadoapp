@@ -134,14 +134,6 @@
   outline: none;
 }
 
-.item-del {
-  color: #c4bcb0;
-  font-size: var(--font-size-md);
-  background: none;
-  border: none;
-  padding: 4px;
-}
-
 .add-item-row {
   display: flex;
   align-items: center;

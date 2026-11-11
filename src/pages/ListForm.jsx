@@ -3,7 +3,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { IconDeviceFloppy, IconBrandWhatsapp, IconTrash, IconPlus, IconUsers, IconUserPlus, IconX, IconPencil } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
-import DeleteListButton from "../components/ui/DeleteListButton";
+import DeleteButton from "../components/ui/DeleteButton";
+import IconButton from "../components/ui/IconButton";
 import PageUI from "../components/ui/PageUI";
 import { useLists } from "../hooks/listsContext";
 import { useAuth } from "../hooks/authContext";
@@ -554,9 +555,7 @@ function ListForm() {
                   <button className="btn-info-expand" onClick={() => handleToggleExpand(item.id)}>
                     {item.expanded ? "−" : "+"}
                   </button>
-                  <button className="item-del" onClick={() => handleRemoveItem(item.id)}>
-                    <IconTrash size={16} className="icon-soft" />
-                  </button>
+                  <IconButton icon={IconTrash} label="Quitar item" variant="soft" size={16} onClick={() => handleRemoveItem(item.id)} />
                 </div>
 
                 {item.expanded && (
@@ -706,7 +705,7 @@ function ListForm() {
             <span>WhatsApp</span>
           </button>
         </div>
-        {isEditing && <DeleteListButton onClick={handleDelete} />}
+        {isEditing && <DeleteButton onClick={handleDelete} />}
       </div>
 
       <PageUI ui={ui} />

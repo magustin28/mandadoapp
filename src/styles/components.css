@@ -122,6 +122,10 @@
   color: var(--color-texto-muted);
 }
 
+.btn-icon--soft {
+  color: #c4bcb0;
+}
+
 .btn-icon--danger {
   color: #c0392b;
 }
@@ -187,10 +191,6 @@
 /* Colores sueltos que antes iban en el prop color de cada <Icon>. */
 .icon-muted {
   color: var(--color-texto-muted);
-}
-
-.icon-soft {
-  color: #c4bcb0;
 }
 
 .icon-danger {
@@ -281,4 +281,17 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
+}
+
+/* Variante sin caja roja (Perfil: "Eliminar mi cuenta"). */
+.btn-delete-list--subtle {
+  background: none;
+  border: none;
+  padding: var(--space-md);
+  font-size: var(--font-size-md);
+  margin-top: var(--space-xl);
+}
+
+.btn-delete-list:disabled {
+  opacity: 0.6;
 }

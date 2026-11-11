@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { IconPencil, IconBrandWhatsapp, IconUsers } from "@tabler/icons-react";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
-import DeleteListButton from "../components/ui/DeleteListButton";
+import DeleteButton from "../components/ui/DeleteButton";
 import PageUI from "../components/ui/PageUI";
 import { useLists } from "../hooks/listsContext";
 import { useAuth } from "../hooks/authContext";
@@ -125,7 +125,7 @@ function ListDetail() {
           <IconBrandWhatsapp size={18} />
           <span>Enviar por WhatsApp</span>
         </button>
-        {owner && <DeleteListButton onClick={handleDelete} />}
+        {owner && <DeleteButton onClick={handleDelete} />}
       </div>
 
       <PageUI ui={ui} />

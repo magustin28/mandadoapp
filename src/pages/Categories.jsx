@@ -60,7 +60,7 @@ function Categories() {
                 <div className="cat-list-actions">
                   <IconButton icon={IconPencil} label="Editar lista" onClick={() => navigate(`/lista/${list.id}/editar`)} />
                   <IconButton icon={IconCopy} label="Duplicar lista" onClick={() => handleCopy(list.id)} />
-                  <IconButton icon={IconTrash} label="Eliminar lista" danger onClick={() => handleDelete(list.id)} />
+                  <IconButton icon={IconTrash} label="Eliminar lista" variant="danger" onClick={() => handleDelete(list.id)} />
                 </div>
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconUser, IconMail, IconLock, IconTrash } from "@tabler/icons-react";
+import { IconUser, IconMail, IconLock } from "@tabler/icons-react";
+import DeleteButton from "../components/ui/DeleteButton";
 import FieldRow from "../components/ui/FieldRow";
 import Footer from "../components/layout/Footer";
 import NavBar from "../components/layout/NavBar";
@@ -116,10 +117,7 @@ function Perfil() {
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
 
-        <button className="perfil-btn-danger" onClick={handleDeleteAccount} disabled={deleting}>
-          <IconTrash size={16} />
-          {deleting ? "Eliminando cuenta..." : "Eliminar mi cuenta"}
-        </button>
+        <DeleteButton subtle disabled={deleting} label={deleting ? "Eliminando cuenta..." : "Eliminar mi cuenta"} onClick={handleDeleteAccount} />
       </div>
 
       <PageUI ui={ui} />
