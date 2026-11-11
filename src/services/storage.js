@@ -187,31 +187,48 @@ export async function deletePreloadedItem(category, id) {
 }
 
 // Guarda como sugerencias (en "Mis items") los ítems de una lista que todavía
-// no estaban, para que aparezcan la próxima vez. No pisa los existentes.
+// no estaban, para que aparezcan la próxima vez. No pisa los existentes, pero sí
+// les completa la unidad a los que se habían guardado sin unidad.
 export async function addMissingPreloadedItems(category, items) {
   const userId = await getUserId();
   if (!items?.length) return;
 
-  const { data: existentes, error } = await supabase.from("preloaded_items").select("name").eq("category", category);
+  const { data: existentes, error } = await supabase.from("preloaded_items").select("id, name, unit").eq("category", category);
   if (error) throw error;
 
-  const yaEstan = new Set((existentes || []).map((row) => (row.name || "").trim().toLowerCase()));
+  const porNombre = new Map((existentes || []).map((row) => [(row.name || "").trim().toLowerCase(), row]));
 
   const nuevos = [];
+  const aCompletarUnidad = [];
   for (const item of items) {
     const nombre = (item.name || "").trim();
     if (!nombre) continue;
+
     const clave = nombre.toLowerCase();
-    if (yaEstan.has(clave)) continue;
-    yaEstan.add(clave);
     // Se guarda con la unidad que tenía el ítem en la lista; si no tenía, "unid."
     // (el mismo default que usa el formulario de Mis items).
-    nuevos.push({ name: nombre, unit: normalizarUnidad(item.unit) || "unid.", category, owner_id: userId });
+    const unidad = normalizarUnidad(item.unit) || "unid.";
+    const existente = porNombre.get(clave);
+
+    if (!existente) {
+      // Se agrega al mapa para no insertar dos veces el mismo nombre si la lista lo repite.
+      porNombre.set(clave, { id: null, name: nombre, unit: unidad });
+      nuevos.push({ name: nombre, unit: unidad, category, owner_id: userId });
+    } else if (!existente.unit) {
+      // Ya estaba en "Mis items" pero sin unidad (lo guardó una versión anterior): se completa.
+      aCompletarUnidad.push({ id: existente.id, unit: unidad });
+    }
   }
 
-  if (!nuevos.length) return;
-  const { error: insertError } = await supabase.from("preloaded_items").insert(nuevos);
-  if (insertError) throw insertError;
+  if (nuevos.length) {
+    const { error: insertError } = await supabase.from("preloaded_items").insert(nuevos);
+    if (insertError) throw insertError;
+  }
+
+  for (const fila of aCompletarUnidad) {
+    const { error: updateError } = await supabase.from("preloaded_items").update({ unit: fila.unit }).eq("id", fila.id);
+    if (updateError) throw updateError;
+  }
 }
 
 // ---------- Comercios ----------

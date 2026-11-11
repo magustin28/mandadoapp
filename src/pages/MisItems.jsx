@@ -102,8 +102,8 @@ function MisItems() {
                 ) : (
                   <>
                     <span className="mis-item-name">{item.name}</span>
-                    <span className="mis-item-unit">{normalizarUnidad(item.unit) || ""}</span>
                     <PriceBadge price={precio} />
+                    <span className="mis-item-unit">{normalizarUnidad(item.unit) || ""}</span>
                     <IconButton icon={IconPencil} label="Editar item" onClick={() => handleEditStart(item)} />
                     <IconButton icon={IconTrash} label="Eliminar item" variant="danger" onClick={() => handleDelete(item.id)} />
                   </>
